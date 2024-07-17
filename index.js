@@ -9,6 +9,7 @@ import miningRoutes from "./routes/miningRoutes.js"
 import adminRoutes from './routes/adminApplication.js';
 import connectDB from './mongoDb.js';
 import miningJob  from './shedule-job/sheduleJobs.js';
+import watchHiveTransaction  from './shedule-job/hiveJobs.js';
 import cors from "cors"
 
 const app = express();
@@ -35,6 +36,7 @@ app.use('/api/mining', miningRoutes);
 app.use('/api/admin', adminRoutes);
 
 miningJob.start();
+watchHiveTransaction.start();
 
 // Start the server
 app.listen(PORT, () => {

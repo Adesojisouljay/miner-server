@@ -1,5 +1,3 @@
-// controllers/userController.js
-
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/Users.js';
@@ -19,7 +17,10 @@ export const register = async (req, res) => {
       email,
       password: hashedPassword,
       walletAddress,
-      balance: 0
+      hiveBalance: 0,
+      hbdBalance: 0,
+      nairaBalance: 0,
+      totalBalance: 0
     });
 
     await newUser.save();
