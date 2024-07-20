@@ -7,6 +7,6 @@ export const getAccountHistory = (
   filters = []
 ) => {
   return Array.isArray(filters)
-    ? client.call("condenser_api", "get_account_history", [username, start, limit, ...filters])
-    : client.call("condenser_api", "get_account_history", [username, start, limit]);
+    ? client.call("condenser_api", "get_account_history", [username, 1000, limit, ...filters])
+    : client.call("condenser_api", "get_account_history", [username, 1000, limit]);
 };
