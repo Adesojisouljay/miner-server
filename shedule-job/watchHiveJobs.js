@@ -121,13 +121,14 @@ const watchHiveBlocks = cron.schedule('*/0.1 * * * * *', async () => {
                   user.hbdBalance += amount;
                 }
 
-                // this should be calculated in usd, ill check later)
+                // this should be calculated in usd, i'll check later)
                 user.totalBalance = user.hiveBalance + user.hbdBalance + user.nairaBalance;
 
                 await user.save({ session });
                 console.log(`Updated balance for user ${user._id}`);
 
                 const newTransaction = new transactionHistory({
+                  userId: userId,
                   sender: operation.value.from,
                   receiver: operation.value.to,
                   memo: operation.value.memo,
