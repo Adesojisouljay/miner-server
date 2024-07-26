@@ -7,6 +7,7 @@ import userRoutes from './routes/userRoutes.js';
 import withdrawalRoutes from './routes/withdrawalRoutes.js';
 import miningRoutes from "./routes/miningRoutes.js"
 import adminRoutes from './routes/adminApplication.js';
+import transactionRoute from "./routes/transactionRoutes.js"
 import connectDB from './mongoDb.js';
 // import miningJob  from './shedule-job/sheduleJobs.js';
 // import watchHiveTransaction  from './shedule-job/hiveJobs.js';
@@ -35,6 +36,7 @@ app.use('/api/auth', userRoutes);
 app.use('/api/withdrawals', withdrawalRoutes);
 app.use('/api/mining', miningRoutes);
 app.use('/api/admin', adminRoutes);
+app.use("/api/transactions", transactionRoute)
 
 // miningJob.start();
 // watchHiveTransaction.start();
