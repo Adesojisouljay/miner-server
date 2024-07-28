@@ -6,6 +6,7 @@ const transactionHistorySchema = new mongoose.Schema({
   receiver: { type: String, required: true },
   memo: { type: String, required: false },
   trxId: { type: String, required: true, unique: true },
+  blockNumber: { type: String, required: true, unique: true },
   amount: { type: String, required: true },
   currency: { type: String, required: true },
   type: { type: String, required: true },

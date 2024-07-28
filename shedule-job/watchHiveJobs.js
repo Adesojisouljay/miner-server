@@ -22,7 +22,7 @@ const getBlock = async (blockNum) => {
     return response.data.result;
   } catch (error) {
     console.error(`Error getting block ${blockNum}:`, error.message);
-    throw error;
+    // throw error;
   }
 };
 
@@ -37,7 +37,7 @@ const getLastBlockNum = async () => {
     return response.data.result.head_block_number;
   } catch (error) {
     console.error('Error getting last block number:', error.message);
-    throw error;
+    // throw error;
   }
 };
 
@@ -80,7 +80,7 @@ const watchHiveBlocks = cron.schedule('*/0.1 * * * * *', async () => {
       // Process each transaction using the transaction ID map
       for (const transactionId of block.block.transaction_ids) {
         const transaction = transactionIdMap[transactionId];
-
+        
         for (const operation of transaction.operations) {
           const { type } = operation;
 
@@ -133,6 +133,7 @@ const watchHiveBlocks = cron.schedule('*/0.1 * * * * *', async () => {
                   receiver: operation.value.to,
                   memo: operation.value.memo,
                   trxId: transactionId,
+                  blockNumber: currentBlockNum,
                   amount: amount.toString(),
                   currency: currency,
                   type: 'deposit',
