@@ -23,7 +23,7 @@ export const processHiveWithdrawal = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    // Find the asset in the user's assets
+    // Find asset in the user's assets
     const asset = user.assets.find(asset => asset.currency.toLowerCase() === currency.toLowerCase());
 
     if (!asset) {
@@ -34,7 +34,7 @@ export const processHiveWithdrawal = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Insufficient balance' });
     }
 
-    // Perform the transfer
+    // Perform transfer
     const result = await transferOp(to, `${amount} ${currency.toUpperCase()}`, memo || '');
     // console.log(result)
 
@@ -71,6 +71,7 @@ export const processHiveWithdrawal = async (req, res) => {
     // Update user's balance
     asset.balance -= amount;
     asset.assetWorth = asset.balance * asset.usdValue;
+    //we should calculate totalValue here too
     await user.save();
 
     return res.status(200).json({ success: true, message: 'Withdrawal successful', result });
