@@ -162,7 +162,7 @@ const watchHiveBlocks = cron.schedule('*/0.1 * * * * *', async () => {
         }
       }
     }
-    // Update the last processed block number
+    // Update last processed block number
     lastProcessedBlockNum = currentBlockNum;
   } catch (error) {
     console.error('Error watching Hive blocks:', error.message);
