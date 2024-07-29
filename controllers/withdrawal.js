@@ -1,6 +1,84 @@
 import User from '../models/Users.js';
 import Withdrawal from '../models/Withdrawal.js';
 import Mining from '../models/Mining.js'; // Assuming you have a Mining model
+import { transferOp } from '../hive/operations.js';
+import { getWithdrawalDetails } from '../hive/operations.js';
+import TransactionHistory from '../models/transactionHistory.js';
+
+const acc = process.env.HIVE_ACC
+ 
+//HIVE LOGICS
+export const processHiveWithdrawal = async (req, res) => {
+  const { to, amount, currency, memo } = req.body;
+  const userId = req.user.userId;
+
+  if (!to || !amount || !currency) {
+    return res.status(400).json({ success: false, message: 'Recipient account, amount, and currency are required' });
+  }
+
+  try {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Find the asset in the user's assets
+    const asset = user.assets.find(asset => asset.currency.toLowerCase() === currency.toLowerCase());
+
+    if (!asset) {
+      return res.status(400).json({ success: false, message: `No asset found for currency: ${currency}` });
+    }
+
+    if (asset.balance < amount) {
+      return res.status(400).json({ success: false, message: 'Insufficient balance' });
+    }
+
+    // Perform the transfer
+    const result = await transferOp(to, `${amount} ${currency.toUpperCase()}`, memo || '');
+    // console.log(result)
+
+    const { id: trxId} = result;
+    console.log(trxId)
+
+     // Fetch transaction details to get the block number
+     const transactionDetails = await getWithdrawalDetails(trxId);
+
+     if(transactionDetails) {
+
+        const { block_num: blockNumber } = transactionDetails;
+    
+      console.log(transactionDetails)
+
+      // Log transaction history
+      const transactionHistory = new TransactionHistory({
+          userId,
+          sender: acc,
+          receiver: to,
+          memo,
+          trxId,
+          blockNumber,
+          amount,
+          currency: currency,
+          type: 'withdrawal',
+          bankDetails: {}
+        });
+    
+        await transactionHistory.save();
+        console.log('Transaction history updated successfully.');
+     }
+
+    // Update user's balance
+    asset.balance -= amount;
+    asset.assetWorth = asset.balance * asset.usdValue;
+    await user.save();
+
+    return res.status(200).json({ success: true, message: 'Withdrawal successful', result });
+  } catch (error) {
+    console.error('Error processing withdrawal:', error.message);
+    return res.status(500).json({ success: false, message: 'Internal Server Error', error: error.message });
+  }
+};
 
 export const initiateWithdrawal = async (req, res) => {
   try {
