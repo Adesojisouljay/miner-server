@@ -22,7 +22,6 @@ const getBlock = async (blockNum) => {
     return response.data.result;
   } catch (error) {
     console.error(`Error getting block ${blockNum}:`, error.message);
-    // throw error;
   }
 };
 
@@ -37,7 +36,6 @@ const getLastBlockNum = async () => {
     return response.data.result.head_block_number;
   } catch (error) {
     console.error('Error getting last block number:', error.message);
-    // throw error;
   }
 };
 
@@ -65,13 +63,12 @@ const mapNaiToCurrency = (nai) => {
 const watchHiveBlocks = cron.schedule('*/0.1 * * * * *', async () => {
   try {
     await initLastProcessedBlockNum();
-
     const currentBlockNum = await getLastBlockNum();
 
     for (let blockNum = lastProcessedBlockNum + 1; blockNum <= currentBlockNum; blockNum++) {
       const block = await getBlock(blockNum);
 
-      //map transaction IDs to transactions
+      // Map transaction IDs to transactions
       const transactionIdMap = {};
       block.block.transactions.forEach((transaction, index) => {
         transactionIdMap[block.block.transaction_ids[index]] = transaction;
@@ -80,7 +77,7 @@ const watchHiveBlocks = cron.schedule('*/0.1 * * * * *', async () => {
       // Process each transaction using the transaction ID map
       for (const transactionId of block.block.transaction_ids) {
         const transaction = transactionIdMap[transactionId];
-        
+
         for (const operation of transaction.operations) {
           const { type } = operation;
 
@@ -107,25 +104,30 @@ const watchHiveBlocks = cron.schedule('*/0.1 * * * * *', async () => {
               const user = await User.findById(userId).session(session);
 
               if (user) {
-                if (user.hiveBalance === undefined) user.hiveBalance = 0;
-                if (user.hbdBalance === undefined) user.hbdBalance = 0;
-                if (user.nairaBalance === undefined) user.nairaBalance = 0;
-                if (user.totalBalance === undefined) user.totalBalance = 0;
-
                 const currency = mapNaiToCurrency(operation.value.amount.nai);
                 const amount = parseFloat(operation.value.amount.amount) / Math.pow(10, operation.value.amount.precision);
 
-                if (currency === 'HIVE') {
-                  user.hiveBalance += amount;
-                } else if (currency === 'HBD') {
-                  user.hbdBalance += amount;
+                let assetFound = false;
+                for (let asset of user.assets) {
+                  if (asset.currency.toLowerCase() === currency.toLowerCase()) {
+                    asset.balance += amount;
+                    asset.assetWorth = asset.balance * asset.usdValue;
+                    assetFound = true;
+                    break;
+                  }
                 }
 
-                // this should be calculated in usd, i'll check later)
-                user.totalBalance = user.hiveBalance + user.hbdBalance + user.nairaBalance;
+                if (!assetFound) {
+                  console.warn(`No asset found for currency: ${currency} for user: ${userId}`);
+                  await session.abortTransaction();
+                  session.endSession();
+                  continue;
+                }
+
+                user.totalBalance = user.assets.reduce((total, asset) => total + asset.assetWorth, 0);
 
                 await user.save({ session });
-                console.log(`Updated balance for user ${user._id}`);
+                console.log(`Updated balance and asset worth for user ${user._id}`);
 
                 const newTransaction = new transactionHistory({
                   userId: userId,
@@ -144,7 +146,7 @@ const watchHiveBlocks = cron.schedule('*/0.1 * * * * *', async () => {
                 console.warn(`No user found with ID: ${userId}`);
               }
 
-              //new processed transaction record with trxId set
+              // New processed transaction record with trxId set
               const newProcessedTrx = new ProcessedTrx({ trxId: transactionId });
               await newProcessedTrx.save({ session });
               console.log(`Processed transaction ${transactionId} saved.`);

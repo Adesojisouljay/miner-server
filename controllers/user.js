@@ -1,10 +1,24 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/Users.js';
+import { fetchCryptoData } from '../utils/coingecko.js';
+
+const validatePassword = (password) => {
+  const regex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,16}$/;
+  console.log(regex.test(password))
+  return regex.test(password);
+};   
 
 export const register = async (req, res) => {
   try {
     const { email, password, walletAddress } = req.body;
+
+    if (!validatePassword(password)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
+      });
+    }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -17,10 +31,58 @@ export const register = async (req, res) => {
       email,
       password: hashedPassword,
       walletAddress,
-      hiveBalance: 0,
-      hbdBalance: 0,
+      assets: [
+        {
+          currency: 'hive',
+          balance: 0,
+          depositAddress: walletAddress,
+          memo: null, // will be updated after user creation
+          usdValue: 0,
+          assetWorth: 0,
+          coinId: null,
+          symbol: null,
+          priceChange: 0,
+          percentageChange: 0,
+          image: null,
+          privateKey: null
+        },
+        {
+          currency: 'hbd',
+          balance: 0,
+          depositAddress: walletAddress,
+          memo: null, // will be updated after user creation
+          usdValue: 0,
+          assetWorth: 0,
+          coinId: null,
+          symbol: null,
+          priceChange: 0,
+          percentageChange: 0,
+          image: null,
+          privateKey: null
+        }
+      ],
       nairaBalance: 0,
-      totalBalance: 0
+      totalBalance: 0,
+    });
+
+    await newUser.save();
+
+    // Fetch crypto data from CoinGecko
+    const cryptoData = await fetchCryptoData();
+
+    // Update the memo fields for hive and hbd assets with the user's ID and fetched crypto data
+    newUser.assets.forEach(asset => {
+      asset.memo = newUser._id;
+      const cryptoInfo = cryptoData.find(crypto => crypto.id === (asset.currency === 'hive' ? 'hive' : 'hive_dollar'));
+      if (cryptoInfo) {
+        asset.coinId = cryptoInfo.id;
+        asset.symbol = cryptoInfo.symbol;
+        asset.usdValue = cryptoInfo.current_price;
+        asset.priceChange = cryptoInfo.price_change_24h;
+        asset.percentageChange = cryptoInfo.price_change_percentage_24h;
+        asset.image = cryptoInfo.image;
+        asset.assetWorth = asset.usdValue * asset.balance;
+      }
     });
 
     await newUser.save();
@@ -48,7 +110,19 @@ export const login = async (req, res) => {
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
 
-    res.status(200).json({ success: true, token, user });
+    const userWithoutPassword = {
+      _id: user._id,
+      email: user.email,
+      walletAddress: user.walletAddress,
+      assets: user.assets,
+      nairaBalance: user.nairaBalance,
+      totalBalance: user.totalBalance,
+      role: user.role,
+      createdAt: user.createdAt,
+      balance: user.balance
+    };
+
+    res.status(200).json({ success: true, token, user: userWithoutPassword });
   } catch (error) {
     console.error('Error logging in user:', error);
     res.status(500).json({ success: false, error: 'Internal Server Error' });
@@ -58,7 +132,7 @@ export const login = async (req, res) => {
 // Fetch user profile
 export const profile = async (req, res) => {
   try {
-    console.log(req.user.userId)
+    // console.log(req.user.userId)
     const user = await User.findById(req.user.userId);
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });

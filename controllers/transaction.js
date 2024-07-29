@@ -5,7 +5,6 @@ export const getUserTransactions = async (req, res) => {
         const userId = req.user.userId;
     
         const transactionH = await transactionHistory.find({ userId });
-        console.log(userId)
     
         if (!transactionH) {
           return res.status(404).json({ success: false, message: 'transaction record not found' });
