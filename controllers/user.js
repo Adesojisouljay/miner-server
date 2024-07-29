@@ -117,6 +117,7 @@ export const login = async (req, res) => {
       assets: user.assets,
       nairaBalance: user.nairaBalance,
       totalBalance: user.totalBalance,
+      totalNairaValue: user.totalNairaValue,
       role: user.role,
       createdAt: user.createdAt,
       balance: user.balance
@@ -132,13 +133,13 @@ export const login = async (req, res) => {
 // Fetch user profile
 export const profile = async (req, res) => {
   try {
-    // console.log(req.user.userId)
-    const user = await User.findById(req.user.userId);
+    const user = await User.findById(req.user.userId).lean();
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    res.status(200).json({ success: true, user });
+    const { password, ...userWithoutPassword } = user;
+    res.status(200).json({ success: true, user: userWithoutPassword });
   } catch (error) {
     console.error('Error fetching user profile:', error);
     res.status(500).json({ success: false, error: 'Internal Server Error' });
