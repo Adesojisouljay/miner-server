@@ -77,7 +77,7 @@
 //                         if (user.hiveBalance === undefined) user.hiveBalance = 0;
 //                         if (user.hbdBalance === undefined) user.hbdBalance = 0;
 //                         if (user.nairaBalance === undefined) user.nairaBalance = 0;
-//                         if (user.totalBalance === undefined) user.totalBalance = 0;
+//                         if (user.totalUsdValue === undefined) user.totalUsdValue = 0;
 
 //                         if (currency === 'HIVE') {
 //                             user.hiveBalance += parseFloat(amountValue);
@@ -85,7 +85,7 @@
 //                             user.hbdBalance += parseFloat(amountValue);
 //                         }
 
-//                         user.totalBalance = user.hiveBalance + user.hbdBalance + user.nairaBalance;
+//                         user.totalUsdValue = user.hiveBalance + user.hbdBalance + user.nairaBalance;
 
 //                         await user.save();
 //                         // console.log(`Updated balance for user ${user._id}`);

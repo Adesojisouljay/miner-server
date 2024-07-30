@@ -22,8 +22,8 @@ const migrateUsers = async () => {
                 user.nairaBalance = 0;
                 updated = true;
             }
-            if (user.totalBalance === undefined) {
-                user.totalBalance = 0;
+            if (user.totalUsdValue === undefined) {
+                user.totalUsdValue = 0;
                 updated = true;
             }
 

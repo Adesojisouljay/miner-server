@@ -1,5 +1,3 @@
-// server.js
-
 import express from 'express';
 import bodyParser from 'body-parser';
 import depositRoutes from './routes/depositRoutes.js';
@@ -10,9 +8,9 @@ import adminRoutes from './routes/adminApplication.js';
 import transactionRoute from "./routes/transactionRoutes.js"
 import connectDB from './mongoDb.js';
 // import miningJob  from './shedule-job/sheduleJobs.js';
-// import watchHiveTransaction  from './shedule-job/hiveJobs.js';
 import watchHiveBlocks from './shedule-job/watchHiveJobs.js';
 import cors from "cors"
+import { updateCryptos } from './utils/updateCryptos.js';
 
 const app = express();
 const PORT = process.env.PORT || 2000;
@@ -24,8 +22,7 @@ const PORT = process.env.PORT || 2000;
 
 app.use(cors());
 
-
-// Middleware
+// Middleware 
 app.use(bodyParser.json());
 
 connectDB();
@@ -39,8 +36,8 @@ app.use('/api/admin', adminRoutes);
 app.use("/api/transactions", transactionRoute)
 
 // miningJob.start();
-// watchHiveTransaction.start();
-watchHiveBlocks.start()
+watchHiveBlocks.start();
+updateCryptos.start()
 
 // Start the server
 app.listen(PORT, () => {
