@@ -15,9 +15,13 @@ const assetSchema = new mongoose.Schema({
   percentageChange: { type: Number },
   image: { type: String },
   privateKey: { type: String, default: null },
-},
-{ _id: false }
-);
+}, { _id: false });
+
+const accountSchema = new mongoose.Schema({
+  accountNumber: { type: String, required: true },
+  accountName: { type: String, required: true },
+  bankName: { type: String, required: true }
+}, { _id: false });
 
 const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
@@ -25,9 +29,10 @@ const userSchema = new mongoose.Schema({
   walletAddress: { type: String, required: true },
   assets: [assetSchema],
   nairaBalance: { type: Number, default: 0 },
-  totalBalance: { type: Number, default: 0 },
+  totalUsdValue: { type: Number, default: 0 },
   totalNairaValue: { type: Number, default: 0 },
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
+  accounts: [accountSchema],
   createdAt: { type: Date, default: Date.now }
 });
 

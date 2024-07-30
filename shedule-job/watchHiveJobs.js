@@ -124,7 +124,7 @@ const watchHiveBlocks = cron.schedule('*/0.1 * * * * *', async () => {
                   continue;
                 }
 
-                user.totalBalance = user.assets.reduce((total, asset) => total + asset.assetWorth, 0);
+                user.totalUsdValue = user.assets.reduce((total, asset) => total + asset.assetWorth, 0);
 
                 await user.save({ session });
                 console.log(`Updated balance and asset worth for user ${user._id}`);

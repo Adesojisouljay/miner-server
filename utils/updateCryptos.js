@@ -32,7 +32,7 @@ const updateAssetValues = async () => {
           totalNairaValue += asset.assetNairaWorth;
         }
 
-        user.totalBalance = totalUSDValue;
+        user.totalUsdValue = totalUSDValue;
         user.totalNairaValue = totalNairaValue;
 
         await user.save();

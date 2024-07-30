@@ -62,7 +62,7 @@ export const register = async (req, res) => {
         }
       ],
       nairaBalance: 0,
-      totalBalance: 0,
+      totalUsdValue: 0,
     });
 
     await newUser.save();
@@ -116,7 +116,7 @@ export const login = async (req, res) => {
       walletAddress: user.walletAddress,
       assets: user.assets,
       nairaBalance: user.nairaBalance,
-      totalBalance: user.totalBalance,
+      totalUsdValue: user.totalUsdValue,
       totalNairaValue: user.totalNairaValue,
       role: user.role,
       createdAt: user.createdAt,
@@ -218,5 +218,29 @@ export const updateRole = async (req, res) => {
   } catch (error) {
     console.error('Error updating user profile:', error);
     res.status(500).json({ success: false, error: 'Internal Server Error' });
+  }
+};
+
+export const addBankAccount = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { accountNumber, accountName, bankName } = req.body;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const newAccount = { accountNumber, accountName, bankName };
+
+    user.accounts.push(newAccount);
+
+    await user.save();
+
+    res.status(200).json({ success: true, message: 'Bank account added successfully', accounts: user.accounts });
+  } catch (error) {
+    console.error('Error adding bank account:', error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 };
