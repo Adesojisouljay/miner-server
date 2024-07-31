@@ -38,7 +38,9 @@ export const register = async (req, res) => {
           depositAddress: walletAddress,
           memo: null, // will be updated after user creation
           usdValue: 0,
+          nairaValue: 0,
           assetWorth: 0,
+          assetNairaWorth: 0,
           coinId: null,
           symbol: null,
           priceChange: 0,
@@ -52,7 +54,9 @@ export const register = async (req, res) => {
           depositAddress: walletAddress,
           memo: null, // will be updated after user creation
           usdValue: 0,
+          nairaValue: 0,
           assetWorth: 0,
+          assetNairaWorth: 0,
           coinId: null,
           symbol: null,
           priceChange: 0,
@@ -63,25 +67,32 @@ export const register = async (req, res) => {
       ],
       nairaBalance: 0,
       totalUsdValue: 0,
+      totalNairaValue: 0,
     });
 
     await newUser.save();
 
     // Fetch crypto data from CoinGecko
-    const cryptoData = await fetchCryptoData();
+    const { usdData, ngnData } = await fetchCryptoData();
+    console.log({ usdData, ngnData });
 
-    // Update the memo fields for hive and hbd assets with the user's ID and fetched crypto data
+    // Update memo fields for hive and hbd
     newUser.assets.forEach(asset => {
       asset.memo = newUser._id;
-      const cryptoInfo = cryptoData.find(crypto => crypto.id === (asset.currency === 'hive' ? 'hive' : 'hive_dollar'));
-      if (cryptoInfo) {
-        asset.coinId = cryptoInfo.id;
-        asset.symbol = cryptoInfo.symbol;
-        asset.usdValue = cryptoInfo.current_price;
-        asset.priceChange = cryptoInfo.price_change_24h;
-        asset.percentageChange = cryptoInfo.price_change_percentage_24h;
-        asset.image = cryptoInfo.image;
+      const cryptoInfoUSD = usdData.find(crypto => crypto.id === (asset.currency === 'hive' ? 'hive' : 'hive_dollar'));
+      const cryptoInfoNGN = ngnData.find(crypto => crypto.id === (asset.currency === 'hive' ? 'hive' : 'hive_dollar'));
+      if (cryptoInfoUSD) {
+        asset.coinId = cryptoInfoUSD.id;
+        asset.symbol = cryptoInfoUSD.symbol;
+        asset.usdValue = cryptoInfoUSD.current_price;
+        asset.priceChange = cryptoInfoUSD.price_change_24h;
+        asset.percentageChange = cryptoInfoUSD.price_change_percentage_24h;
+        asset.image = cryptoInfoUSD.image;
         asset.assetWorth = asset.usdValue * asset.balance;
+      }
+      if (cryptoInfoNGN) {
+        asset.nairaValue = cryptoInfoNGN.current_price;
+        asset.assetNairaWorth = asset.nairaValue * asset.balance;
       }
     });
 
