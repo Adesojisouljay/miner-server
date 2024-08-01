@@ -167,3 +167,21 @@ export const disapproveMerchant = async (req, res) => {
     res.status(500).json({ success: false, error: 'Internal Server Error' });
   }
 };
+
+export const getRandomMerchant = async (req, res) => {
+  try {
+    const merchants = await Merchant.find({ status: 'approved', isActive: true });
+
+    if (merchants.length === 0) {
+      return res.status(404).json({ success: false, message: 'All our merchants are currently unavailable' });
+    }
+
+    const randomIndex = Math.floor(Math.random() * merchants.length);
+    const selectedMerchant = merchants[randomIndex];
+
+    res.status(200).json({ success: true, data: selectedMerchant });
+  } catch (error) {
+    console.error('Error fetching random merchant:', error);
+    res.status(500).json({ success: false, error: 'Internal Server Error' });
+  }
+};

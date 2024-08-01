@@ -9,7 +9,7 @@ const transactionHistorySchema = new mongoose.Schema({
   blockNumber: { type: String, required: true, unique: true },
   amount: { type: String, required: true },
   currency: { type: String, required: true },
-  type: { type: String, required: true },
+  type: { type: String, required: true }, //deposit, withdraw, naira deposi etc.
   bankDetails: {
     accountNumber: { type: String },
     bankName: { type: String },

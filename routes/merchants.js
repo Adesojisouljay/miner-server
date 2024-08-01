@@ -6,7 +6,8 @@ import {
     updateMerchant,
     deleteMerchant,
     approveMerchant,
-    disapproveMerchant
+    disapproveMerchant,
+    getRandomMerchant
  } from '../controllers/merchant.js';
  import { authMiddleware, isAdminMiddleware } from '../middleware/authMiddleWare.js'; 
 
@@ -19,5 +20,6 @@ router.put('/:id', authMiddleware, updateMerchant);
 router.delete('/:id', authMiddleware, deleteMerchant);
 router.patch('/:id/approve', authMiddleware, isAdminMiddleware, approveMerchant);
 router.patch('/:id/cancel', authMiddleware, isAdminMiddleware, disapproveMerchant);
+router.get('/generate/account', authMiddleware, getRandomMerchant);
 
 export default router;
