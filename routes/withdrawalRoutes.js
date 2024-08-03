@@ -6,9 +6,11 @@ const router = express.Router();
 
 // router.post('/', withdraw);
 router.post('/hive', authMiddleware, processHiveWithdrawal);
+
+/////////////////////
 router.post('/initiate', authMiddleware, initiateWithdrawal);
 router.get('/', getAllWithdrawals);
-router.put('/confirm/:withdrawalId', authMiddleware, isAdminMiddleware, confirmWithdrawal);
-router.put('/cancel/:withdrawalId', authMiddleware, isAdminMiddleware, cancelWithdrawal);
+router.put('/confirm/:withdrawalId', authMiddleware, isAdminMiddleware, confirmWithdrawal);  
+router.put('/cancel/:withdrawalId', authMiddleware, isAdminMiddleware, cancelWithdrawal);    
 
 export default router;

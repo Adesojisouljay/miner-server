@@ -4,7 +4,7 @@ const assetSchema = new mongoose.Schema({
   currency: { type: String, required: true }, // e.g., 'hive', 'hbd', 'btc'
   balance: { type: Number, default: 0 },
   depositAddress: { type: String, required: true },
-  memo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  memo: { type: String, required: true },
   usdValue: { type: Number, default: 0 },
   nairaValue: { type: Number, default: 0 },
   assetNairaWorth: { type: Number, default: 0 },

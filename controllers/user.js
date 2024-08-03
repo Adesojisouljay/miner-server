@@ -2,16 +2,13 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/Users.js';
 import { fetchCryptoData } from '../utils/coingecko.js';
-
-const validatePassword = (password) => {
-  const regex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,16}$/;
-  console.log(regex.test(password))
-  return regex.test(password);
-};   
+import { generateUserMemo, validatePassword } from '../utils/index.js';  
 
 export const register = async (req, res) => {
   try {
     const { email, password, walletAddress } = req.body;
+
+    const memo = await generateUserMemo()
 
     if (!validatePassword(password)) {
       return res.status(400).json({
@@ -35,15 +32,15 @@ export const register = async (req, res) => {
         {
           currency: 'hive',
           balance: 0,
-          depositAddress: walletAddress,
-          memo: null, // will be updated after user creation
+          depositAddress: process.env.HIVE_ACC,
+          memo,
           usdValue: 0,
           nairaValue: 0,
           assetWorth: 0,
           assetNairaWorth: 0,
           coinId: null,
           symbol: null,
-          priceChange: 0,
+          priceChange: 0, 
           percentageChange: 0,
           image: null,
           privateKey: null
@@ -51,8 +48,8 @@ export const register = async (req, res) => {
         {
           currency: 'hbd',
           balance: 0,
-          depositAddress: walletAddress,
-          memo: null, // will be updated after user creation
+          depositAddress: process.env.HIVE_ACC,
+          memo,
           usdValue: 0,
           nairaValue: 0,
           assetWorth: 0,
@@ -72,13 +69,10 @@ export const register = async (req, res) => {
 
     await newUser.save();
 
-    // Fetch crypto data from CoinGecko
     const { usdData, ngnData } = await fetchCryptoData();
     console.log({ usdData, ngnData });
 
-    // Update memo fields for hive and hbd
     newUser.assets.forEach(asset => {
-      asset.memo = newUser._id;
       const cryptoInfoUSD = usdData.find(crypto => crypto.id === (asset.currency === 'hive' ? 'hive' : 'hive_dollar'));
       const cryptoInfoNGN = ngnData.find(crypto => crypto.id === (asset.currency === 'hive' ? 'hive' : 'hive_dollar'));
       if (cryptoInfoUSD) {
