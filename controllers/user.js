@@ -6,7 +6,7 @@ import { generateUserMemo, validatePassword } from '../utils/index.js';
 
 export const register = async (req, res) => {
   try {
-    const { email, password, walletAddress } = req.body;
+    const { email, password, username } = req.body;
 
     const memo = await generateUserMemo()
 
@@ -17,7 +17,15 @@ export const register = async (req, res) => {
       });
     }
 
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({
+      $or: [
+        { email: email },
+        { username: username } 
+      ]
+    });    
+
+    // const existingUser = await User.findOne({ email, username });
+    
     if (existingUser) {
       return res.status(400).json({ success: false, message: 'User already exists' });
     }
@@ -27,7 +35,7 @@ export const register = async (req, res) => {
     const newUser = new User({
       email,
       password: hashedPassword,
-      walletAddress,
+      username,
       assets: [
         {
           currency: 'hive',
@@ -101,11 +109,19 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, username } = req.body;
+    console.log(req.body.username)
 
-    const user = await User.findOne({ email });
+     if (!email && !username) {
+      return res.status(400).json({ success: false, message: 'Email or username is required' });
+    }
+
+    const searchQuery = email ? { email } : { username };
+    console.log(searchQuery)
+
+    const user = await User.findOne(searchQuery);
     if (!user) {
-      return res.status(401).json({ success: false, message: 'Invalid email or password' });
+      return res.status(401).json({ success: false, message: 'Invalid email/username or password' });
     }
 
     const passwordMatch = await bcrypt.compare(password, user.password);
@@ -118,7 +134,7 @@ export const login = async (req, res) => {
     const userWithoutPassword = {
       _id: user._id,
       email: user.email,
-      walletAddress: user.walletAddress,
+      username: user.username,
       assets: user.assets,
       nairaBalance: user.nairaBalance,
       totalUsdValue: user.totalUsdValue,
@@ -153,7 +169,7 @@ export const profile = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const { email, password, walletAddress } = req.body;
+    const { email, password, username } = req.body;
     const userId = req.user.userId; 
 
     if (!userId) {
@@ -178,13 +194,13 @@ export const updateProfile = async (req, res) => {
       const hashedPassword = await bcrypt.hash(password, 10);
       updatedFields.password = hashedPassword;
     }
-    if (walletAddress && walletAddress !== currentUser.walletAddress) {
+    if (username && username !== currentUser.username) {
 
-      const existingWalletUser = await User.findOne({ walletAddress });
+      const existingWalletUser = await User.findOne({ username });
       if (existingWalletUser && existingWalletUser._id !== userId) {
         return res.status(400).json({ success: false, message: 'Wallet address already exists' });
       }
-      updatedFields.walletAddress = walletAddress;
+      updatedFields.username = username;
     }
 
     const updatedUser = await User.findByIdAndUpdate(userId, updatedFields, { new: true });
