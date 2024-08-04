@@ -5,7 +5,7 @@ import Merchant from '../models/Merchant.js';
 import NairaDepositRequest from '../models/FiatDeposit.js';
 import TransactionHistory from '../models/transactionHistory.js';
 
-
+///be removed
 export const deposit = async (req, res) => {
   try {
     const { walletAddress, amount } = req.body;

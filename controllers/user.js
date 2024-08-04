@@ -2,16 +2,13 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/Users.js';
 import { fetchCryptoData } from '../utils/coingecko.js';
-
-const validatePassword = (password) => {
-  const regex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,16}$/;
-  console.log(regex.test(password))
-  return regex.test(password);
-};   
+import { generateUserMemo, validatePassword } from '../utils/index.js';  
 
 export const register = async (req, res) => {
   try {
-    const { email, password, walletAddress } = req.body;
+    const { email, password, username } = req.body;
+
+    const memo = await generateUserMemo()
 
     if (!validatePassword(password)) {
       return res.status(400).json({
@@ -20,7 +17,15 @@ export const register = async (req, res) => {
       });
     }
 
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({
+      $or: [
+        { email: email },
+        { username: username } 
+      ]
+    });    
+
+    // const existingUser = await User.findOne({ email, username });
+    
     if (existingUser) {
       return res.status(400).json({ success: false, message: 'User already exists' });
     }
@@ -30,20 +35,20 @@ export const register = async (req, res) => {
     const newUser = new User({
       email,
       password: hashedPassword,
-      walletAddress,
+      username,
       assets: [
         {
           currency: 'hive',
           balance: 0,
-          depositAddress: walletAddress,
-          memo: null, // will be updated after user creation
+          depositAddress: process.env.HIVE_ACC,
+          memo,
           usdValue: 0,
           nairaValue: 0,
           assetWorth: 0,
           assetNairaWorth: 0,
           coinId: null,
           symbol: null,
-          priceChange: 0,
+          priceChange: 0, 
           percentageChange: 0,
           image: null,
           privateKey: null
@@ -51,8 +56,8 @@ export const register = async (req, res) => {
         {
           currency: 'hbd',
           balance: 0,
-          depositAddress: walletAddress,
-          memo: null, // will be updated after user creation
+          depositAddress: process.env.HIVE_ACC,
+          memo,
           usdValue: 0,
           nairaValue: 0,
           assetWorth: 0,
@@ -72,13 +77,10 @@ export const register = async (req, res) => {
 
     await newUser.save();
 
-    // Fetch crypto data from CoinGecko
     const { usdData, ngnData } = await fetchCryptoData();
     console.log({ usdData, ngnData });
 
-    // Update memo fields for hive and hbd
     newUser.assets.forEach(asset => {
-      asset.memo = newUser._id;
       const cryptoInfoUSD = usdData.find(crypto => crypto.id === (asset.currency === 'hive' ? 'hive' : 'hive_dollar'));
       const cryptoInfoNGN = ngnData.find(crypto => crypto.id === (asset.currency === 'hive' ? 'hive' : 'hive_dollar'));
       if (cryptoInfoUSD) {
@@ -107,11 +109,19 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, username } = req.body;
+    console.log(req.body.username)
 
-    const user = await User.findOne({ email });
+     if (!email && !username) {
+      return res.status(400).json({ success: false, message: 'Email or username is required' });
+    }
+
+    const searchQuery = email ? { email } : { username };
+    console.log(searchQuery)
+
+    const user = await User.findOne(searchQuery);
     if (!user) {
-      return res.status(401).json({ success: false, message: 'Invalid email or password' });
+      return res.status(401).json({ success: false, message: 'Invalid email/username or password' });
     }
 
     const passwordMatch = await bcrypt.compare(password, user.password);
@@ -124,7 +134,7 @@ export const login = async (req, res) => {
     const userWithoutPassword = {
       _id: user._id,
       email: user.email,
-      walletAddress: user.walletAddress,
+      username: user.username,
       assets: user.assets,
       nairaBalance: user.nairaBalance,
       totalUsdValue: user.totalUsdValue,
@@ -159,7 +169,7 @@ export const profile = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const { email, password, walletAddress } = req.body;
+    const { email, password, username } = req.body;
     const userId = req.user.userId; 
 
     if (!userId) {
@@ -184,13 +194,13 @@ export const updateProfile = async (req, res) => {
       const hashedPassword = await bcrypt.hash(password, 10);
       updatedFields.password = hashedPassword;
     }
-    if (walletAddress && walletAddress !== currentUser.walletAddress) {
+    if (username && username !== currentUser.username) {
 
-      const existingWalletUser = await User.findOne({ walletAddress });
+      const existingWalletUser = await User.findOne({ username });
       if (existingWalletUser && existingWalletUser._id !== userId) {
         return res.status(400).json({ success: false, message: 'Wallet address already exists' });
       }
-      updatedFields.walletAddress = walletAddress;
+      updatedFields.username = username;
     }
 
     const updatedUser = await User.findByIdAndUpdate(userId, updatedFields, { new: true });
