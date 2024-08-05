@@ -73,6 +73,9 @@ export const processHiveWithdrawal = async (req, res) => {
     asset.asseUsdtWorth = asset.balance * asset.usdValue;
     asset.assetNairaWorth = asset.balance * asset.nairaValue;
     //we should calculate totalValue here too
+    user.totalUsdValue = user.assets.reduce((total, asset) => total + (asset.assetWorth || 0), 0);
+    user.totalNairaValue = user.assets.reduce((total, asset) => total + (asset.assetNairaWorth || 0), 0);
+    
     await user.save();
 
     return res.status(200).json({ success: true, message: 'Withdrawal successful', result });
