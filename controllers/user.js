@@ -44,7 +44,7 @@ export const register = async (req, res) => {
           memo,
           usdValue: 0,
           nairaValue: 0,
-          assetWorth: 0,
+          asseUsdtWorth: 0,
           assetNairaWorth: 0,
           coinId: null,
           symbol: null,
@@ -60,7 +60,7 @@ export const register = async (req, res) => {
           memo,
           usdValue: 0,
           nairaValue: 0,
-          assetWorth: 0,
+          asseUsdtWorth: 0,
           assetNairaWorth: 0,
           coinId: null,
           symbol: null,
@@ -90,7 +90,7 @@ export const register = async (req, res) => {
         asset.priceChange = cryptoInfoUSD.price_change_24h;
         asset.percentageChange = cryptoInfoUSD.price_change_percentage_24h;
         asset.image = cryptoInfoUSD.image;
-        asset.assetWorth = asset.usdValue * asset.balance;
+        asset.asseUsdtWorth = asset.usdValue * asset.balance;
       }
       if (cryptoInfoNGN) {
         asset.nairaValue = cryptoInfoNGN.current_price;
