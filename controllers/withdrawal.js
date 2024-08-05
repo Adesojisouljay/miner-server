@@ -70,7 +70,8 @@ export const processHiveWithdrawal = async (req, res) => {
 
     // Update user's balance
     asset.balance -= amount;
-    asset.assetWorth = asset.balance * asset.usdValue;
+    asset.asseUsdtWorth = asset.balance * asset.usdValue;
+    asset.assetNairaWorth = asset.balance * asset.nairaValue;
     //we should calculate totalValue here too
     await user.save();
 

@@ -72,10 +72,10 @@ export const getUserTransactions = async (req, res) => {
       const assetBalance = amountAfterFee / userAsset.nairaValue;
   
       userAsset.balance += assetBalance;
-      userAsset.assetWorth = userAsset.balance * userAsset.usdValue;
+      userAsset.asseUsdtWorth = userAsset.balance * userAsset.usdValue;
       userAsset.assetNairaWorth = userAsset.balance * userAsset.nairaValue;
   
-      user.totalUsdValue = user.assets.reduce((total, asset) => total + asset.assetWorth, 0);
+      user.totalUsdValue = user.assets.reduce((total, asset) => total + asset.asseUsdtWorth, 0);
       user.totalNairaValue = user.assets.reduce((total, asset) => total + asset.assetNairaWorth, 0);
   
       // Deduct Naira balance
@@ -136,10 +136,10 @@ export const getUserTransactions = async (req, res) => {
       const nairaValue = amountAfterFee * userAsset.nairaValue;
   
       userAsset.balance -= amount;
-      userAsset.assetWorth = userAsset.balance * userAsset.usdValue;
+      userAsset.asseUsdtWorth = userAsset.balance * userAsset.usdValue;
       userAsset.assetNairaWorth = userAsset.balance * userAsset.nairaValue;
   
-      user.totalUsdValue = user.assets.reduce((total, asset) => total + asset.assetWorth, 0);
+      user.totalUsdValue = user.assets.reduce((total, asset) => total + asset.asseUsdtWorth, 0);
       user.totalNairaValue = user.assets.reduce((total, asset) => total + asset.assetNairaWorth, 0);
   
       // Add Naira balance

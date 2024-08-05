@@ -74,24 +74,27 @@ const watchHiveBlocks = cron.schedule('*/0.1 * * * * *', async () => {
         transactionIdMap[block.block.transaction_ids[index]] = transaction;
       });
 
-      // Process each transaction using the transaction ID map
+      // Process each transaction using transaction ID
       for (const transactionId of block.block.transaction_ids) {
         const transaction = transactionIdMap[transactionId];
 
         for (const operation of transaction.operations) {
           const { type } = operation;
 
-          if (type === 'transfer_operation' && (operation.value.to === 'souljay' && operation.value.memo)) {
-            console.log("Transfer to souljay detected");
+          if (type === 'transfer_operation' && (operation.value.to === process.env.HIVE_ACC && operation.value.memo)) {
+            console.log("Transfer to " + process.env.HIVE_ACC + " detected");
 
             const session = await mongoose.startSession();
             session.startTransaction();
 
             try {
-              const userId = mongoose.Types.ObjectId.isValid(operation.value.memo.trim()) ? operation.value.memo.trim() : null;
+              const memo = operation.value.memo.trim();
 
-              if (!userId) {
-                console.warn(`Invalid memo format for user ID: ${operation.value.memo}`);
+              // Find the user with the corresponding asset memo
+              const user = await User.findOne({ 'assets.memo': memo }).session(session);
+
+              if (!user) {
+                console.warn(`No user found with memo: ${memo}`);
                 continue;
               }
 
@@ -101,52 +104,47 @@ const watchHiveBlocks = cron.schedule('*/0.1 * * * * *', async () => {
                 continue;
               }
 
-              const user = await User.findById(userId).session(session);
+              const currency = mapNaiToCurrency(operation.value.amount.nai);
+              const amount = parseFloat(operation.value.amount.amount) / Math.pow(10, operation.value.amount.precision);
 
-              if (user) {
-                const currency = mapNaiToCurrency(operation.value.amount.nai);
-                const amount = parseFloat(operation.value.amount.amount) / Math.pow(10, operation.value.amount.precision);
-
-                let assetFound = false;
-                for (let asset of user.assets) {
-                  if (asset.currency.toLowerCase() === currency.toLowerCase()) {
-                    asset.balance += amount;
-                    asset.assetWorth = asset.balance * asset.usdValue;
-                    assetFound = true;
-                    break;
-                  }
+              let assetFound = false;
+              for (let asset of user.assets) {
+                if (asset.memo === memo && asset.currency.toLowerCase() === currency.toLowerCase()) {
+                  asset.balance += amount;
+                  asset.asseUsdtWorth = asset.balance * asset.usdValue;
+                  asset.assetNairaWorth = asset.balance * asset.nairaValue;
+                  assetFound = true;
+                  break;
                 }
-
-                if (!assetFound) {
-                  console.warn(`No asset found for currency: ${currency} for user: ${userId}`);
-                  await session.abortTransaction();
-                  session.endSession();
-                  continue;
-                }
-
-                user.totalUsdValue = user.assets.reduce((total, asset) => total + asset.assetWorth, 0);
-
-                await user.save({ session });
-                console.log(`Updated balance and asset worth for user ${user._id}`);
-
-                const newTransaction = new transactionHistory({
-                  userId: userId,
-                  sender: operation.value.from,
-                  receiver: operation.value.to,
-                  memo: operation.value.memo,
-                  trxId: transactionId,
-                  blockNumber: currentBlockNum,
-                  amount: amount.toString(),
-                  currency: currency,
-                  type: 'deposit',
-                });
-                await newTransaction.save({ session });
-                console.log(`Transaction ${transactionId} saved in history.`);
-              } else {
-                console.warn(`No user found with ID: ${userId}`);
               }
 
-              // New processed transaction record with trxId set
+              if (!assetFound) {
+                console.warn(`No asset found for memo: ${memo} and currency: ${currency}`);
+                await session.abortTransaction();
+                session.endSession();
+                continue;
+              }
+
+              user.totalUsdValue = user.assets.reduce((total, asset) => total + asset.asseUsdtWorth, 0);
+              user.totalNairaValue = user.assets.reduce((total, asset) => total + asset.assetNairaWorth, 0);
+
+              await user.save({ session });
+              console.log(`Updated balance and asset worth for user ${user._id}`);
+
+              const newTransaction = new transactionHistory({
+                userId: user._id,
+                sender: operation.value.from,
+                receiver: operation.value.to,
+                memo: operation.value.memo,
+                trxId: transactionId,
+                blockNumber: currentBlockNum,
+                amount: amount.toString(),
+                currency: currency,
+                type: 'deposit',
+              });
+              await newTransaction.save({ session });
+              console.log(`Transaction ${transactionId} saved in history.`);
+
               const newProcessedTrx = new ProcessedTrx({ trxId: transactionId });
               await newProcessedTrx.save({ session });
               console.log(`Processed transaction ${transactionId} saved.`);
@@ -162,7 +160,6 @@ const watchHiveBlocks = cron.schedule('*/0.1 * * * * *', async () => {
         }
       }
     }
-    // Update last processed block number
     lastProcessedBlockNum = currentBlockNum;
   } catch (error) {
     console.error('Error watching Hive blocks:', error.message);

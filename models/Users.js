@@ -11,7 +11,7 @@ const assetSchema = new mongoose.Schema({
   coinId: { type: String },
   symbol: { type: String },
   priceChange: { type: Number },
-  assetWorth: { type: Number },
+  asseUsdtWorth: { type: Number },
   percentageChange: { type: Number },
   image: { type: String },
   privateKey: { type: String, default: null },

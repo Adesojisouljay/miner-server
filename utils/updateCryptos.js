@@ -25,10 +25,10 @@ const updateAssetValues = async () => {
             asset.priceChange = price_change_24h;
             asset.percentageChange = price_change_percentage_24h;
             asset.image = image;
-            asset.assetWorth = asset.balance * usdPrice;
+            asset.asseUsdtWorth = asset.balance * usdPrice;
             asset.assetNairaWorth = asset.balance * ngnPrice;
           }
-          totalUSDValue += asset.assetWorth;
+          totalUSDValue += asset.asseUsdtWorth;
           totalNairaValue += asset.assetNairaWorth;
         }
 
