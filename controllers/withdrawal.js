@@ -1,13 +1,13 @@
 import User from '../models/Users.js';
 import Withdrawal from '../models/Withdrawal.js';
-import Mining from '../models/Mining.js'; // Assuming you have a Mining model
+import Mining from '../models/Mining.js';
 import { transferOp } from '../hive/operations.js';
 import { getWithdrawalDetails } from '../hive/operations.js';
 import TransactionHistory from '../models/transactionHistory.js';
 
 const acc = process.env.HIVE_ACC
  
-//HIVE LOGICS
+//HIVE W LOGICS
 export const processHiveWithdrawal = async (req, res) => {
   const { to, amount, currency, memo } = req.body;
   const userId = req.user.userId;
@@ -23,7 +23,6 @@ export const processHiveWithdrawal = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    // Find asset in the user's assets
     const asset = user.assets.find(asset => asset.currency.toLowerCase() === currency.toLowerCase());
 
     if (!asset) {
@@ -34,9 +33,7 @@ export const processHiveWithdrawal = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Insufficient balance' });
     }
 
-    // Perform transfer
     const result = await transferOp(to, `${amount} ${currency.toUpperCase()}`, memo || '');
-    // console.log(result)
 
     const { id: trxId} = result;
     console.log(trxId)
@@ -50,7 +47,6 @@ export const processHiveWithdrawal = async (req, res) => {
     
       console.log(transactionDetails)
 
-      // Log transaction history
       const transactionHistory = new TransactionHistory({
           userId,
           sender: acc,
@@ -68,11 +64,10 @@ export const processHiveWithdrawal = async (req, res) => {
         console.log('Transaction history updated successfully.');
      }
 
-    // Update user's balance
     asset.balance -= amount;
     asset.asseUsdtWorth = asset.balance * asset.usdValue;
     asset.assetNairaWorth = asset.balance * asset.nairaValue;
-    //we should calculate totalValue here too
+
     user.totalUsdValue = user.assets.reduce((total, asset) => total + (asset.assetWorth || 0), 0);
     user.totalNairaValue = user.assets.reduce((total, asset) => total + (asset.assetNairaWorth || 0), 0);
     
@@ -85,6 +80,7 @@ export const processHiveWithdrawal = async (req, res) => {
   }
 };
 
+/////////////////others........
 export const initiateWithdrawal = async (req, res) => {
   try {
     const { amount } = req.body;
@@ -194,4 +190,3 @@ export const cancelWithdrawal = async (req, res) => {
     res.status(500).json({ success: false, error: 'Internal Server Error' });
   }
 };
-

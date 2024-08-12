@@ -67,6 +67,10 @@ export const getUserTransactions = async (req, res) => {
         return res.status(400).json({ success: false, message: 'Invalid asset type' });
       }
   
+      if (user.nairaBalance < amount) {
+        return res.status(400).json({ success: false, message: 'Insufficient Naira balance' });
+      }
+  
       const fee = calculateFee(amount);
       const amountAfterFee = amount - fee;
       const assetBalance = amountAfterFee / userAsset.nairaValue;
@@ -78,12 +82,10 @@ export const getUserTransactions = async (req, res) => {
       user.totalUsdValue = user.assets.reduce((total, asset) => total + asset.asseUsdtWorth, 0);
       user.totalNairaValue = user.assets.reduce((total, asset) => total + asset.assetNairaWorth, 0);
   
-      // Deduct Naira balance
       user.nairaBalance -= amount;
   
       await user.save();
   
-      // Record transaction
       const transaction = await TransactionHistory.create({
         userId,
         sender: 'N/A',
@@ -97,7 +99,6 @@ export const getUserTransactions = async (req, res) => {
         bankDetails: {},
       });
   
-      // Record profit
       await Profit.create({
         userId,
         currency,
@@ -112,7 +113,7 @@ export const getUserTransactions = async (req, res) => {
       console.error('Error buying asset:', error);
       res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
-  };
+  };  
   
   export const sellAsset = async (req, res) => {
     try {
@@ -142,12 +143,10 @@ export const getUserTransactions = async (req, res) => {
       user.totalUsdValue = user.assets.reduce((total, asset) => total + asset.asseUsdtWorth, 0);
       user.totalNairaValue = user.assets.reduce((total, asset) => total + asset.assetNairaWorth, 0);
   
-      // Add Naira balance
       user.nairaBalance += nairaValue;
   
       await user.save();
   
-      // Record transaction
       const transaction = await TransactionHistory.create({
         userId,
         sender: userId.toString(),
@@ -161,7 +160,6 @@ export const getUserTransactions = async (req, res) => {
         bankDetails: {},
       });
   
-      // Record profit
       await Profit.create({
         userId,
         currency,
@@ -177,3 +175,57 @@ export const getUserTransactions = async (req, res) => {
       res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
   };
+
+  export const transferNairaBalance = async (req, res) => {
+    try {
+      const { receiverIdentifier, amount } = req.body;
+      const senderId = req.user.userId;
+  
+      const sender = await User.findById(senderId);
+  
+      if (!sender) {
+        return res.status(404).json({ success: false, message: 'Sender not found' });
+      }
+  
+      const receiver = await User.findOne({
+        $or: [{ email: receiverIdentifier }, { username: receiverIdentifier }],
+      });
+  
+      if (!receiver) {
+        return res.status(404).json({ success: false, message: 'Receiver not found' });
+      }
+  
+      if (sender._id.equals(receiver._id)) {
+        return res.status(400).json({ success: false, message: 'Sender and receiver cannot be the same' });
+      }
+  
+      if (sender.nairaBalance < amount) {
+        return res.status(400).json({ success: false, message: 'Insufficient balance' });
+      }
+  
+      sender.nairaBalance -= amount;
+      receiver.nairaBalance += amount;
+  
+      await sender.save();
+      await receiver.save();
+  
+      const Transaction = await TransactionHistory.create({
+        userId: sender._id,
+        sender: sender.username,
+        receiver: receiver.username,
+        memo: 'Transfer Naira balance',
+        trxId: generateTransactionId(),
+        blockNumber: generateBlockNumber(),
+        amount: amount.toString(),
+        currency: 'NGN',
+        type: 'transfer',
+        bankDetails: {},
+      });
+  
+      res.status(200).json({ success: true, message: `Transferred ${amount} Naira successfully`, Transaction });
+    } catch (error) {
+      console.error('Error transferring Naira balance:', error);
+      res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+  };
+  
