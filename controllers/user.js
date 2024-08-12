@@ -2,7 +2,10 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/Users.js';
 import { fetchCryptoData } from '../utils/coingecko.js';
-import { generateUserMemo, validatePassword } from '../utils/index.js';  
+import { generateUserMemo, validatePassword } from '../utils/index.js';
+import { transporter } from '../utils/nodemailer.js';
+
+const resetLink = `${process.env.FRONTEND_URL}/reset-password`;
 
 export const register = async (req, res) => {
   try {
@@ -262,6 +265,71 @@ export const addBankAccount = async (req, res) => {
     res.status(200).json({ success: true, message: 'Bank account added successfully', accounts: user.accounts });
   } catch (error) {
     console.error('Error adding bank account:', error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+};
+
+export const requestPasswordReset = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Generate 6-digit token
+    const resetToken = Math.floor(100000 + Math.random() * 900000).toString();
+    const resetTokenExpiry = Date.now() + 15 * 60 * 1000;
+
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = resetTokenExpiry;
+
+    await user.save();
+ 
+    const mailOptions = {
+      to: user.email,
+      from: process.env.OUTLOOK_USER,
+      subject: 'Password Reset',
+      text: `Your password reset code is ${resetToken}. This code is valid for i5 minutes.\n\n
+            You can reset your password by entering this code on the following page:\n\n${resetLink}\n\n
+            If you did not request a password reset, please ignore this email.`,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    res.status(200).json({ success: true, message: 'Password reset code has been sent to your email' });
+  } catch (error) {
+    console.error('Error requesting password reset:', error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+};
+
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'Invalid or expired token' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    user.password = hashedPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+
+    await user.save();
+
+    res.status(200).json({ success: true, message: 'Password has been reset successfully' });
+  } catch (error) {
+    console.error('Error resetting password:', error);
     res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 };

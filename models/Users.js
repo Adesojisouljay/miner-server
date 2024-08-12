@@ -33,6 +33,9 @@ const userSchema = new mongoose.Schema({
   totalNairaValue: { type: Number, default: 0 },
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
   accounts: [accountSchema],
+  profileImage: { type: String },
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date },
   createdAt: { type: Date, default: Date.now }
 });
 
