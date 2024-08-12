@@ -36,6 +36,8 @@ const userSchema = new mongoose.Schema({
   profileImage: { type: String },
   resetPasswordToken: { type: String },
   resetPasswordExpires: { type: Date },
+  withdrawalToken: { type: String },
+  withdrawalTokenExpires: { type: Date },
   createdAt: { type: Date, default: Date.now }
 });
 
