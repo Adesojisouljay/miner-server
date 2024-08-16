@@ -9,9 +9,9 @@ const resetLink = `${process.env.FRONTEND_URL}/reset-password`;
 
 export const register = async (req, res) => {
   try {
-    const { email, password, username } = req.body;
+    const { email, password, username, firstName, lastName, otherName } = req.body;
 
-    const memo = await generateUserMemo()
+    const memo = await generateUserMemo();
 
     if (!validatePassword(password)) {
       return res.status(400).json({
@@ -23,12 +23,10 @@ export const register = async (req, res) => {
     const existingUser = await User.findOne({
       $or: [
         { email: email },
-        { username: username } 
+        { username: username }
       ]
-    });    
+    });
 
-    // const existingUser = await User.findOne({ email, username });
-    
     if (existingUser) {
       return res.status(400).json({ success: false, message: 'User already exists' });
     }
@@ -39,6 +37,9 @@ export const register = async (req, res) => {
       email,
       password: hashedPassword,
       username,
+      firstName,
+      lastName,
+      otherName,
       assets: [
         {
           currency: 'hive',
@@ -51,7 +52,7 @@ export const register = async (req, res) => {
           assetNairaWorth: 0,
           coinId: null,
           symbol: null,
-          priceChange: 0, 
+          priceChange: 0,
           percentageChange: 0,
           image: null,
           privateKey: null
@@ -112,17 +113,16 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    const { email, password, username } = req.body;
-    console.log(req.body.username)
+    const { identifier, password } = req.body;
 
-     if (!email && !username) {
+     if (!identifier) {
       return res.status(400).json({ success: false, message: 'Email or username is required' });
     }
 
-    const searchQuery = email ? { email } : { username };
-    console.log(searchQuery)
+    const user = await User.findOne({
+      $or: [{ email: identifier }, { username: identifier }],
+    });
 
-    const user = await User.findOne(searchQuery);
     if (!user) {
       return res.status(401).json({ success: false, message: 'Invalid email/username or password' });
     }
@@ -144,7 +144,11 @@ export const login = async (req, res) => {
       totalNairaValue: user.totalNairaValue,
       role: user.role,
       createdAt: user.createdAt,
-      balance: user.balance
+      balance: user.balance,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      otherName: user.otherName || "",
+      kyc: user.kyc || {}
     };
 
     res.status(200).json({ success: true, token, user: userWithoutPassword });
