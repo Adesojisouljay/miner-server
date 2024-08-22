@@ -1,19 +1,53 @@
 import User from '../models/Users.js';
 import Withdrawal from '../models/Withdrawal.js';
-import Mining from '../models/Mining.js'; // Assuming you have a Mining model
+import Mining from '../models/Mining.js';
 import { transferOp } from '../hive/operations.js';
 import { getWithdrawalDetails } from '../hive/operations.js';
 import TransactionHistory from '../models/transactionHistory.js';
+import { transporter } from '../utils/nodemailer.js';
 
 const acc = process.env.HIVE_ACC
  
-//HIVE LOGICS
+//HIVE W LOGICS
+export const requestWithdrawalToken = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const withdrawalToken = Math.floor(100000 + Math.random() * 900000).toString();
+    const tokenExpiry = Date.now() + 15 * 60 * 1000;
+
+    user.withdrawalToken = withdrawalToken;
+    user.withdrawalTokenExpires = tokenExpiry;
+
+    await user.save();
+
+    const mailOptions = {
+      to: user.email,
+      from: process.env.OUTLOOK_USER,
+      subject: 'Withdrawal Token',
+      text: `Your withdrawal token is ${withdrawalToken}. This token is valid for 15 minutes.`,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    return res.status(200).json({ success: true, message: 'Withdrawal token sent to your email' });
+  } catch (error) {
+    console.error('Error requesting withdrawal token:', error);
+    return res.status(500).json({ success: false, message: 'Internal Server Error', error: error.message });
+  }
+};
+
 export const processHiveWithdrawal = async (req, res) => {
-  const { to, amount, currency, memo } = req.body;
+  const { to, amount, currency, memo, withdrawalToken } = req.body;
   const userId = req.user.userId;
 
-  if (!to || !amount || !currency) {
-    return res.status(400).json({ success: false, message: 'Recipient account, amount, and currency are required' });
+  if (!to || !amount || !currency || !withdrawalToken) {
+    return res.status(400).json({ success: false, message: 'Recipient account, amount, currency and withdrawal token are required' });
   }
 
   try {
@@ -23,7 +57,10 @@ export const processHiveWithdrawal = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    // Find asset in the user's assets
+    if (user.withdrawalToken !== withdrawalToken || Date.now() > user.withdrawalTokenExpires) {
+      return res.status(400).json({ success: false, message: 'Invalid or expired withdrawal token' });
+    }
+
     const asset = user.assets.find(asset => asset.currency.toLowerCase() === currency.toLowerCase());
 
     if (!asset) {
@@ -34,9 +71,7 @@ export const processHiveWithdrawal = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Insufficient balance' });
     }
 
-    // Perform transfer
     const result = await transferOp(to, `${amount} ${currency.toUpperCase()}`, memo || '');
-    // console.log(result)
 
     const { id: trxId} = result;
     console.log(trxId)
@@ -50,7 +85,6 @@ export const processHiveWithdrawal = async (req, res) => {
     
       console.log(transactionDetails)
 
-      // Log transaction history
       const transactionHistory = new TransactionHistory({
           userId,
           sender: acc,
@@ -68,11 +102,10 @@ export const processHiveWithdrawal = async (req, res) => {
         console.log('Transaction history updated successfully.');
      }
 
-    // Update user's balance
     asset.balance -= amount;
     asset.asseUsdtWorth = asset.balance * asset.usdValue;
     asset.assetNairaWorth = asset.balance * asset.nairaValue;
-    //we should calculate totalValue here too
+
     user.totalUsdValue = user.assets.reduce((total, asset) => total + (asset.assetWorth || 0), 0);
     user.totalNairaValue = user.assets.reduce((total, asset) => total + (asset.assetNairaWorth || 0), 0);
     
@@ -85,6 +118,7 @@ export const processHiveWithdrawal = async (req, res) => {
   }
 };
 
+/////////////////others........
 export const initiateWithdrawal = async (req, res) => {
   try {
     const { amount } = req.body;
@@ -194,4 +228,3 @@ export const cancelWithdrawal = async (req, res) => {
     res.status(500).json({ success: false, error: 'Internal Server Error' });
   }
 };
-

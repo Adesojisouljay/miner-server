@@ -27,12 +27,21 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   username: { type: String, required: true },
+  firstName: { type: String, required: true },
+  lastName: { type: String, required: true },
+  otherName: { type: String },
   assets: [assetSchema],
   nairaBalance: { type: Number, default: 0 },
   totalUsdValue: { type: Number, default: 0 },
   totalNairaValue: { type: Number, default: 0 },
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
   accounts: [accountSchema],
+  profileImage: { type: String },
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date },
+  withdrawalToken: { type: String },
+  withdrawalTokenExpires: { type: Date },
+  kyc: { type: mongoose.Schema.Types.ObjectId, ref: 'KYC' },
   createdAt: { type: Date, default: Date.now }
 });
 

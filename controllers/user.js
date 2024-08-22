@@ -2,13 +2,16 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/Users.js';
 import { fetchCryptoData } from '../utils/coingecko.js';
-import { generateUserMemo, validatePassword } from '../utils/index.js';  
+import { generateUserMemo, validatePassword } from '../utils/index.js';
+import { transporter } from '../utils/nodemailer.js';
+
+const resetLink = `${process.env.FRONTEND_URL}/reset-password`;
 
 export const register = async (req, res) => {
   try {
-    const { email, password, username } = req.body;
+    const { email, password, username, firstName, lastName, otherName } = req.body;
 
-    const memo = await generateUserMemo()
+    const memo = await generateUserMemo();
 
     if (!validatePassword(password)) {
       return res.status(400).json({
@@ -20,12 +23,10 @@ export const register = async (req, res) => {
     const existingUser = await User.findOne({
       $or: [
         { email: email },
-        { username: username } 
+        { username: username }
       ]
-    });    
+    });
 
-    // const existingUser = await User.findOne({ email, username });
-    
     if (existingUser) {
       return res.status(400).json({ success: false, message: 'User already exists' });
     }
@@ -36,6 +37,9 @@ export const register = async (req, res) => {
       email,
       password: hashedPassword,
       username,
+      firstName,
+      lastName,
+      otherName,
       assets: [
         {
           currency: 'hive',
@@ -48,7 +52,7 @@ export const register = async (req, res) => {
           assetNairaWorth: 0,
           coinId: null,
           symbol: null,
-          priceChange: 0, 
+          priceChange: 0,
           percentageChange: 0,
           image: null,
           privateKey: null
@@ -109,17 +113,16 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    const { email, password, username } = req.body;
-    console.log(req.body.username)
+    const { identifier, password } = req.body;
 
-     if (!email && !username) {
+     if (!identifier) {
       return res.status(400).json({ success: false, message: 'Email or username is required' });
     }
 
-    const searchQuery = email ? { email } : { username };
-    console.log(searchQuery)
+    const user = await User.findOne({
+      $or: [{ email: identifier }, { username: identifier }],
+    });
 
-    const user = await User.findOne(searchQuery);
     if (!user) {
       return res.status(401).json({ success: false, message: 'Invalid email/username or password' });
     }
@@ -141,7 +144,11 @@ export const login = async (req, res) => {
       totalNairaValue: user.totalNairaValue,
       role: user.role,
       createdAt: user.createdAt,
-      balance: user.balance
+      balance: user.balance,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      otherName: user.otherName || "",
+      kyc: user.kyc || {}
     };
 
     res.status(200).json({ success: true, token, user: userWithoutPassword });
@@ -262,6 +269,71 @@ export const addBankAccount = async (req, res) => {
     res.status(200).json({ success: true, message: 'Bank account added successfully', accounts: user.accounts });
   } catch (error) {
     console.error('Error adding bank account:', error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+};
+
+export const requestPasswordReset = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Generate 6-digit token
+    const resetToken = Math.floor(100000 + Math.random() * 900000).toString();
+    const resetTokenExpiry = Date.now() + 15 * 60 * 1000;
+
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = resetTokenExpiry;
+
+    await user.save();
+ 
+    const mailOptions = {
+      to: user.email,
+      from: process.env.OUTLOOK_USER,
+      subject: 'Password Reset',
+      text: `Your password reset code is ${resetToken}. This code is valid for i5 minutes.\n\n
+            You can reset your password by entering this code on the following page:\n\n${resetLink}\n\n
+            If you did not request a password reset, please ignore this email.`,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    res.status(200).json({ success: true, message: 'Password reset code has been sent to your email' });
+  } catch (error) {
+    console.error('Error requesting password reset:', error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+};
+
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'Invalid or expired token' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    user.password = hashedPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+
+    await user.save();
+
+    res.status(200).json({ success: true, message: 'Password has been reset successfully' });
+  } catch (error) {
+    console.error('Error resetting password:', error);
     res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 };
