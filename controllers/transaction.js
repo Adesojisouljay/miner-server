@@ -204,21 +204,28 @@ export const getUserTransactions = async (req, res) => {
         convertedAmount = amount * asset.nairaValue;
         cryptoAmount = amount;
       }
-  
+      
       const fiatFee = calculateFee(convertedAmount);
       const cryptoFee = fiatFee / asset.nairaValue;
-  
+      
       const fiatAmountAfterFee = convertedAmount - fiatFee;
       const cryptoAmountAfterFee = cryptoAmount - cryptoFee;
+      
+      const roundedConvertedAmount = parseFloat(convertedAmount.toFixed(3));
+      const roundedCryptoAmount = parseFloat(Number(cryptoAmount).toFixed(3));
+      const roundedFiatFee = parseFloat(fiatFee.toFixed(3));
+      const roundedCryptoFee = parseFloat(cryptoFee.toFixed(3));
+      const roundedFiatAmountAfterFee = parseFloat(fiatAmountAfterFee.toFixed(3));
+      const roundedCryptoAmountAfterFee = parseFloat(cryptoAmountAfterFee.toFixed(3));
   
       res.status(200).json({
         success: true,
-        convertedAmount,
-        cryptoAmount,
-        fiatFee,
-        cryptoFee: cryptoFee + currency.toUpperCase(),
-        fiatAmountAfterFee,
-        cryptoAmountAfterFee: cryptoAmountAfterFee + currency.toUpperCase(),
+        convertedAmount: roundedConvertedAmount,
+        cryptoAmount: roundedCryptoAmount,
+        fiatFee: roundedFiatFee,
+        cryptoFee: roundedCryptoFee + currency.toUpperCase(),
+        fiatAmountAfterFee: roundedFiatAmountAfterFee,
+        cryptoAmountAfterFee: roundedCryptoAmountAfterFee + currency.toUpperCase(),
         assetDetails: {
           coinId: asset.coinId,
           symbol: asset.symbol,
@@ -230,7 +237,7 @@ export const getUserTransactions = async (req, res) => {
       console.error('Error calculating transaction:', error);
       res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
-  };  
+  };   
 
   export const transferNairaBalance = async (req, res) => {
     try {
