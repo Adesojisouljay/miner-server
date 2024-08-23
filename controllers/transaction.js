@@ -180,7 +180,6 @@ export const getUserTransactions = async (req, res) => {
     try {
       const { amount, currency, amountType, transactionType } = req.query;
       const userId = req.user.userId;
-      console.log(userId);
   
       if (!amount || !currency || !amountType || !transactionType) {
         return res.status(400).json({ success: false, message: 'Invalid input data' });
@@ -197,33 +196,41 @@ export const getUserTransactions = async (req, res) => {
       }
   
       let convertedAmount;
+      let cryptoAmount;
       if (amountType === 'fiat') {
         convertedAmount = amount / asset.nairaValue;
+        cryptoAmount = convertedAmount;
       } else if (amountType === 'crypto') {
         convertedAmount = amount * asset.nairaValue;
+        cryptoAmount = amount;
       }
   
-      const fee = calculateFee(convertedAmount);
-      const amountAfterFee = convertedAmount - fee;
+      const fiatFee = calculateFee(convertedAmount);
+      const cryptoFee = fiatFee / asset.nairaValue;
+  
+      const fiatAmountAfterFee = convertedAmount - fiatFee;
+      const cryptoAmountAfterFee = cryptoAmount - cryptoFee;
   
       res.status(200).json({
         success: true,
         convertedAmount,
-        fee,
-        amountAfterFee,
+        cryptoAmount,
+        fiatFee,
+        cryptoFee: cryptoFee + currency.toUpperCase(),
+        fiatAmountAfterFee,
+        cryptoAmountAfterFee: cryptoAmountAfterFee + currency.toUpperCase(),
         assetDetails: {
           coinId: asset.coinId,
           symbol: asset.symbol,
           image: asset.image,
           balance: asset.balance,
-        }
+        },
       });
     } catch (error) {
       console.error('Error calculating transaction:', error);
       res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
-  };
-  
+  };  
 
   export const transferNairaBalance = async (req, res) => {
     try {
