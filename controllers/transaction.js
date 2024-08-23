@@ -176,6 +176,55 @@ export const getUserTransactions = async (req, res) => {
     }
   };
 
+  export const calculateTransaction = async (req, res) => {
+    try {
+      const { amount, currency, amountType, transactionType } = req.query;
+      const userId = req.user.userId;
+      console.log(userId);
+  
+      if (!amount || !currency || !amountType || !transactionType) {
+        return res.status(400).json({ success: false, message: 'Invalid input data' });
+      }
+  
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ success: false, message: 'User not found' });
+      }
+  
+      const asset = user.assets.find(a => a.currency === currency);
+      if (!asset) {
+        return res.status(404).json({ success: false, message: 'Asset not found' });
+      }
+  
+      let convertedAmount;
+      if (amountType === 'fiat') {
+        convertedAmount = amount / asset.nairaValue;
+      } else if (amountType === 'crypto') {
+        convertedAmount = amount * asset.nairaValue;
+      }
+  
+      const fee = calculateFee(convertedAmount);
+      const amountAfterFee = convertedAmount - fee;
+  
+      res.status(200).json({
+        success: true,
+        convertedAmount,
+        fee,
+        amountAfterFee,
+        assetDetails: {
+          coinId: asset.coinId,
+          symbol: asset.symbol,
+          image: asset.image,
+          balance: asset.balance,
+        }
+      });
+    } catch (error) {
+      console.error('Error calculating transaction:', error);
+      res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+  };
+  
+
   export const transferNairaBalance = async (req, res) => {
     try {
       const { receiverIdentifier, amount } = req.body;
