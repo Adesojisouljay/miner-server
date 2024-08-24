@@ -44,7 +44,6 @@ export const createNairaDepositRequest = async (req, res) => {
   }
 };
 
-
 export const confirmNairaDepositRequest = async (req, res) => {
   try {
     const { depositRequestId, sender, receiver, accountNumber, accountHolderName, bankName } = req.body;
@@ -138,8 +137,29 @@ export const cancelNairaDepositRequest = async (req, res) => {
     console.error('Error cancelling Naira deposit request:', error);
     res.status(500).json({ success: false, error: 'Internal Server Error' });
   }
-};
+}; 
 
+export const getAllNairaDeposits = async (req, res) => {
+  try {
+    const nairaDeposits = await NairaDepositRequest.find();
+
+    const depositsWithDetails = await Promise.all(nairaDeposits.map(async (deposit) => {
+      const user = await User.findById(deposit.userId).select('username email');
+      const merchant = await Merchant.findById(deposit.merchantId).select('username');
+
+      return {
+        ...deposit.toObject(),
+        user: user ? { username: user.username, email: user.email } : null,
+        merchantUsername: merchant ? { username: merchant.username } : null,
+      };
+    }));
+
+    return res.status(200).json({ success: true, data: depositsWithDetails });
+  } catch (error) {
+    console.error('Error fetching Naira deposit requests:', error);
+    return res.status(500).json({ success: false, message: 'Internal Server Error', error: error.message });
+  }
+};
 
 
 
