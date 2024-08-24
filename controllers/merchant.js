@@ -3,7 +3,7 @@ import User from '../models/Users.js';
 
 export const createMerchant = async (req, res) => {
   try {
-    const { nickname, accountNumber, accountName, bankName, residentialAddress, residencePicture, selfiePhotograph, NIN, BVN, socialMediaHandle } = req.body;
+    const { username, accountNumber, accountName, bankName, residentialAddress, residencePicture, selfiePhotograph, NIN, BVN, socialMediaHandle } = req.body;
     const userId = req.user.userId;
 
     const user = await User.findById(userId);
@@ -15,10 +15,10 @@ export const createMerchant = async (req, res) => {
     if (existingMerchant) {
       return res.status(409).json({ success: false, message: 'Merchant account already exists for this user' });
     }
-
-    const existingMerchantByNickname = await Merchant.findOne({ nickname });
-    if (existingMerchantByNickname) {
-      return res.status(409).json({ success: false, message: 'Nickname is already in use' });
+ 
+    const existingMerchantByUsername = await Merchant.findOne({ username });
+    if (existingMerchantByUsername) {
+      return res.status(409).json({ success: false, message: 'username is already in use' });
     }
 
     const existingMerchantByAccount = await Merchant.findOne({ accountNumber });
@@ -38,7 +38,7 @@ export const createMerchant = async (req, res) => {
 
     const newMerchant = new Merchant({
       userId,
-      nickname,
+      username,
       accountNumber,
       accountName,
       bankName,
@@ -86,15 +86,15 @@ export const getMerchantById = async (req, res) => {
 export const updateMerchant = async (req, res) => {
   try {
     const { id } = req.params;
-    const { nickname, accountNumber, accountName, bankName, status, isActive } = req.body;
+    const { username, accountNumber, accountName, bankName, status, isActive } = req.body;
 
-      if (!nickname && !accountNumber && !accountName && !bankName && status === undefined && isActive === undefined) {
+      if (!username && !accountNumber && !accountName && !bankName && status === undefined && isActive === undefined) {
         return res.status(400).json({ success: false, message: 'please rovided field for update' });
       }
 
     const updatedMerchant = await Merchant.findByIdAndUpdate(
       id,
-      { nickname, accountNumber, accountName, bankName, status, isActive },
+      { username, accountNumber, accountName, bankName, status, isActive },
       { new: true }
     );
 
