@@ -1,5 +1,6 @@
 import User from '../models/Users.js';
 import Withdrawal from '../models/Withdrawal.js';
+import FiatWithdrawal from '../models/NairaWithdrawal.js';
 import Mining from '../models/Mining.js';
 import { transferOp } from '../hive/operations.js';
 import { getWithdrawalDetails } from '../hive/operations.js';
@@ -73,43 +74,45 @@ export const processHiveWithdrawal = async (req, res) => {
 
     const result = await transferOp(to, `${amount} ${currency.toUpperCase()}`, memo || '');
 
-    const { id: trxId} = result;
-    console.log(trxId)
+    const { id: trxId } = result;
+    console.log('Transaction ID:', trxId);
 
-     // Fetch transaction details to get the block number
-     const transactionDetails = await getWithdrawalDetails(trxId);
+    const transactionDetails = await getWithdrawalDetails(trxId);
 
-     if(transactionDetails) {
-
-        const { block_num: blockNumber } = transactionDetails;
-    
-      console.log(transactionDetails)
+    if (transactionDetails) {
+      const { block_num: blockNumber } = transactionDetails;
+      console.log('Transaction details:', transactionDetails);
 
       const transactionHistory = new TransactionHistory({
-          userId,
-          sender: acc,
-          receiver: to,
-          memo,
-          trxId,
-          blockNumber,
-          amount,
-          currency: currency,
-          type: 'withdrawal',
-          bankDetails: {}
-        });
-    
-        await transactionHistory.save();
-        console.log('Transaction history updated successfully.');
-     }
+        userId,
+        sender: acc,
+        receiver: to,
+        memo,
+        trxId,
+        blockNumber,
+        amount,
+        currency: currency,
+        type: 'withdrawal',
+        bankDetails: {},
+      });
+
+      await transactionHistory.save();
+      console.log('Transaction history updated successfully.');
+    }
 
     asset.balance -= amount;
     asset.asseUsdtWorth = asset.balance * asset.usdValue;
     asset.assetNairaWorth = asset.balance * asset.nairaValue;
 
-    user.totalUsdValue = user.assets.reduce((total, asset) => total + (asset.assetWorth || 0), 0);
+    user.totalUsdValue = user.assets.reduce((total, asset) => total + (asset.asseUsdtWorth || 0), 0);
     user.totalNairaValue = user.assets.reduce((total, asset) => total + (asset.assetNairaWorth || 0), 0);
-    
+
+    user.withdrawalToken = null;
+    user.withdrawalTokenExpires = null;
+
     await user.save();
+
+    console.log('User after withdrawal:', user);
 
     return res.status(200).json({ success: true, message: 'Withdrawal successful', result });
   } catch (error) {
@@ -117,6 +120,175 @@ export const processHiveWithdrawal = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Internal Server Error', error: error.message });
   }
 };
+
+//////FIAT WITHDRAWAL LOGICS
+export const requestFiatWithdrawal = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { amount, accountNumber, withdrawalToken } = req.body;
+    console.log("data",{amount, accountNumber, withdrawalToken})
+
+    if (!amount || !accountNumber || !withdrawalToken) {
+      return res.status(400).json({ success: false, message: 'Amount, account number, and withdrawal token are required' });
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    if (user.withdrawalToken !== withdrawalToken || Date.now() > user.withdrawalTokenExpires) {
+      return res.status(400).json({ success: false, message: 'Invalid or expired withdrawal token' });
+    }
+
+    if (user.nairaBalance < amount) {
+      return res.status(400).json({ success: false, message: 'Insufficient Naira balance' });
+    }
+
+    const selectedAccount = user.accounts.find(acc => acc.accountNumber === accountNumber);
+
+    if (!selectedAccount) {
+      return res.status(400).json({ success: false, message: 'Account not found' });
+    }
+
+    const fiatWithdrawal = new FiatWithdrawal({
+      userId,
+      amount,
+      account: {
+        accountNumber: selectedAccount.accountNumber,
+        accountName: selectedAccount.accountName,
+        bankName: selectedAccount.bankName
+      }
+    });
+
+    await fiatWithdrawal.save();
+
+    user.withdrawalToken = null;
+    user.withdrawalTokenExpires = null;
+    await user.save();
+
+    return res.status(200).json({ success: true, message: 'Withdrawal request placed successfully' });
+  } catch (error) {
+    console.error('Error requesting fiat withdrawal:', error);
+    return res.status(500).json({ success: false, message: 'Internal Server Error', error: error.message });
+  }
+};
+
+export const confirmFiatWithdrawal = async (req, res) => {
+  try {
+    const { withdrawalId } = req.body;
+
+    if (!withdrawalId) {
+      return res.status(400).json({ success: false, message: 'Withdrawal ID is required' });
+    }
+
+    const fiatWithdrawal = await FiatWithdrawal.findById(withdrawalId);
+
+    if (!fiatWithdrawal) {
+      return res.status(404).json({ success: false, message: 'Withdrawal request not found' });
+    }
+
+    if (fiatWithdrawal.status !== 'pending') {
+      return res.status(400).json({ success: false, message: 'Withdrawal request already processed' });
+    }
+
+    const user = await User.findById(fiatWithdrawal.userId);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    user.nairaBalance -= fiatWithdrawal.amount;
+    user.totalNairaValue -= fiatWithdrawal.amount;
+
+    await user.save();
+
+    fiatWithdrawal.status = 'confirmed';
+    await fiatWithdrawal.save();
+
+    return res.status(200).json({ success: true, message: 'Withdrawal confirmed successfully' });
+  } catch (error) {
+    console.error('Error confirming fiat withdrawal:', error);
+    return res.status(500).json({ success: false, message: 'Internal Server Error', error: error.message });
+  }
+};
+
+export const cancelFiatWithdrawal = async (req, res) => {
+  try {
+    const { withdrawalId } = req.body;
+
+    if (!withdrawalId) {
+      return res.status(400).json({ success: false, message: 'Withdrawal ID is required' });
+    }
+
+    const fiatWithdrawal = await FiatWithdrawal.findById(withdrawalId);
+
+    if (!fiatWithdrawal) {
+      return res.status(404).json({ success: false, message: 'Withdrawal request not found' });
+    }
+
+    if (fiatWithdrawal.status !== 'pending') {
+      return res.status(400).json({ success: false, message: 'Withdrawal request cannot be canceled' });
+    }
+
+    const user = await User.findById(fiatWithdrawal.userId);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Reversing the user's balance if necessary
+    user.nairaBalance += fiatWithdrawal.amount;
+    user.totalNairaValue += fiatWithdrawal.amount;
+
+    await user.save();
+
+    fiatWithdrawal.status = 'canceled';
+    await fiatWithdrawal.save();
+
+    return res.status(200).json({ success: true, message: 'Withdrawal canceled successfully' });
+  } catch (error) {
+    console.error('Error canceling withdrawal:', error);
+    return res.status(500).json({ success: false, message: 'Internal Server Error', error: error.message });
+  }
+};
+
+export const getAllFiatWithdrawals = async (req, res) => {
+  try {
+    const withdrawals = await FiatWithdrawal.find();
+
+    const withdrawalWithUserDetails = await Promise.all(withdrawals.map(async (withdrawal) => {
+      const user = await User.findById(withdrawal.userId).select('username email');
+      return {
+        ...withdrawal.toObject(),
+        user: {
+          username: user.username,
+          email: user.email, 
+        } 
+      };
+    }));
+
+    return res.status(200).json({ success: true, withdrawals: withdrawalWithUserDetails });
+  } catch (error) {
+    console.error('Error fetching withdrawals:', error);
+    return res.status(500).json({ success: false, message: 'Internal Server Error', error: error.message });
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /////////////////others........
 export const initiateWithdrawal = async (req, res) => {

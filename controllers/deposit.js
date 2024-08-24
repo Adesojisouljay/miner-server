@@ -5,104 +5,6 @@ import Merchant from '../models/Merchant.js';
 import NairaDepositRequest from '../models/FiatDeposit.js';
 import TransactionHistory from '../models/transactionHistory.js';
 
-///be removed
-export const deposit = async (req, res) => {
-  try {
-    const { walletAddress, amount } = req.body;
-    console.log("test log",walletAddress, amount)
-
-    const deposit = new Deposit({
-      user: req.user.userId,
-      walletAddress,
-      amount,
-      status: 'Pending'
-    });
-
-    await deposit.save();
-
-    res.status(201).json({ success: true, message: 'Deposit request initiated successfully' });
-  } catch (error) {
-    console.error('Error initiating deposit request:', error);
-    res.status(500).json({ success: false, error: 'Internal Server Error' });
-  }
-};
-
-export const getAllDeposits = async (req, res) => {
-  try {
-
-    const deposits = await Deposit.find();
-
-    res.status(200).json({ success: true, deposits });
-  } catch (error) {
-    console.error('Error fetching deposits:', error);
-    res.status(500).json({ success: false, error: 'Internal Server Error' });
-  }
-};
-
-export const confirmDeposit = async (req, res) => {
-  try {
-    const { depositId } = req.params;
-
-    const deposit = await Deposit.findById(depositId);
-    if (!deposit) {
-      return res.status(404).json({ success: false, message: 'Deposit not found' });
-    }
-
-    deposit.status = 'Confirmed';
-    await deposit.save();
-
-    const user = await User.findById(deposit.user);
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-
-    user.balance = +(user.balance + deposit.amount).toFixed(3);
-    await user.save();
-
-    const APR = 0.15;
-    let newMiningRate = +(user.balance * APR / (365 * 24 * 60 * 60 * 100));
-    console.log('User Balance:', user.balance);
-    console.log('New Mining Rate:',typeof newMiningRate);
-    console.log('New Mining Rate:', newMiningRate.toFixed(3));
-
-    let mining = await Mining.findOne({ userId: user._id });
-    if (!mining) {
-      mining = new Mining({
-        userId: user._id,
-        miningRate: newMiningRate,
-      });
-    } else {
-
-      mining.miningRate = newMiningRate;
-    }
-    await mining.save();
-
-    res.status(200).json({ success: true, message: 'Deposit confirmed and user balance updated', deposit });
-  } catch (error) {
-    console.error('Error confirming deposit:', error);
-    res.status(500).json({ success: false, error: 'Internal Server Error' });
-  }
-};
-
-export const cancelDeposit = async (req, res) => {
-  try {
-    const depositId = req.params.depositId;
-
-    const deposit = await Deposit.findById(depositId);
-    if (!deposit) {
-      return res.status(404).json({ success: false, message: 'Deposit request not found' });
-    }
-
-    deposit.status = 'Canceled';
-    await deposit.save();
-
-    res.status(200).json({ success: true, message: 'Deposit request canceled successfully' });
-  } catch (error) {
-    console.error('Error canceling deposit request:', error);
-    res.status(500).json({ success: false, error: 'Internal Server Error' });
-  }
-};
-
 ////////FIAT DEPOSIT LOGICS
 export const createNairaDepositRequest = async (req, res) => {
   try {
@@ -114,6 +16,11 @@ export const createNairaDepositRequest = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Merchant not found or not approved/active' });
     }
 
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
     const newNairaDepositRequest = new NairaDepositRequest({
       userId,
       merchantId,
@@ -122,8 +29,15 @@ export const createNairaDepositRequest = async (req, res) => {
     });
 
     await newNairaDepositRequest.save();
-
-    res.status(201).json({ success: true, message: 'Naira deposit request created successfully', data: newNairaDepositRequest });
+    res.status(201).json({
+      success: true,
+      message: 'Naira deposit request created successfully',
+      data: {
+        depositRequest: newNairaDepositRequest,
+        userUsername: user.username,  
+        merchantUsername: merchant.nickname 
+      }
+    });
   } catch (error) {
     console.error('Error creating Naira deposit request:', error);
     res.status(500).json({ success: false, error: 'Internal Server Error' });
@@ -221,6 +135,131 @@ export const cancelNairaDepositRequest = async (req, res) => {
     res.status(200).json({ success: true, message: 'Naira deposit cancelled', data: depositRequest });
   } catch (error) {
     console.error('Error cancelling Naira deposit request:', error);
+    res.status(500).json({ success: false, error: 'Internal Server Error' });
+  }
+}; 
+
+export const getAllNairaDeposits = async (req, res) => {
+  try {
+    const nairaDeposits = await NairaDepositRequest.find();
+
+    const depositsWithDetails = await Promise.all(nairaDeposits.map(async (deposit) => {
+      const user = await User.findById(deposit.userId).select('username email');
+      const merchant = await Merchant.findById(deposit.merchantId).select('username');
+
+      return {
+        ...deposit.toObject(),
+        user: user ? { username: user.username, email: user.email } : null,
+        merchantUsername: merchant ? { username: merchant.username } : null,
+      };
+    }));
+
+    return res.status(200).json({ success: true, data: depositsWithDetails });
+  } catch (error) {
+    console.error('Error fetching Naira deposit requests:', error);
+    return res.status(500).json({ success: false, message: 'Internal Server Error', error: error.message });
+  }
+};
+
+
+
+
+
+
+///be removed//////////////
+export const deposit = async (req, res) => {
+  try {
+    const { walletAddress, amount } = req.body;
+    console.log("test log",walletAddress, amount)
+
+    const deposit = new Deposit({
+      user: req.user.userId,
+      walletAddress,
+      amount,
+      status: 'Pending'
+    });
+
+    await deposit.save();
+
+    res.status(201).json({ success: true, message: 'Deposit request initiated successfully' });
+  } catch (error) {
+    console.error('Error initiating deposit request:', error);
+    res.status(500).json({ success: false, error: 'Internal Server Error' });
+  }
+};
+
+export const getAllDeposits = async (req, res) => {
+  try {
+
+    const deposits = await Deposit.find();
+
+    res.status(200).json({ success: true, deposits });
+  } catch (error) {
+    console.error('Error fetching deposits:', error);
+    res.status(500).json({ success: false, error: 'Internal Server Error' });
+  }
+};
+
+export const confirmDeposit = async (req, res) => {
+  try {
+    const { depositId } = req.params;
+
+    const deposit = await Deposit.findById(depositId);
+    if (!deposit) {
+      return res.status(404).json({ success: false, message: 'Deposit not found' });
+    }
+
+    deposit.status = 'Confirmed';
+    await deposit.save();
+
+    const user = await User.findById(deposit.user);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    user.balance = +(user.balance + deposit.amount).toFixed(3);
+    await user.save();
+
+    const APR = 0.15;
+    let newMiningRate = +(user.balance * APR / (365 * 24 * 60 * 60 * 100));
+    console.log('User Balance:', user.balance);
+    console.log('New Mining Rate:',typeof newMiningRate);
+    console.log('New Mining Rate:', newMiningRate.toFixed(3));
+
+    let mining = await Mining.findOne({ userId: user._id });
+    if (!mining) {
+      mining = new Mining({
+        userId: user._id,
+        miningRate: newMiningRate,
+      });
+    } else {
+
+      mining.miningRate = newMiningRate;
+    }
+    await mining.save();
+
+    res.status(200).json({ success: true, message: 'Deposit confirmed and user balance updated', deposit });
+  } catch (error) {
+    console.error('Error confirming deposit:', error);
+    res.status(500).json({ success: false, error: 'Internal Server Error' });
+  }
+};
+
+export const cancelDeposit = async (req, res) => {
+  try {
+    const depositId = req.params.depositId;
+
+    const deposit = await Deposit.findById(depositId);
+    if (!deposit) {
+      return res.status(404).json({ success: false, message: 'Deposit request not found' });
+    }
+
+    deposit.status = 'Canceled';
+    await deposit.save();
+
+    res.status(200).json({ success: true, message: 'Deposit request canceled successfully' });
+  } catch (error) {
+    console.error('Error canceling deposit request:', error);
     res.status(500).json({ success: false, error: 'Internal Server Error' });
   }
 };

@@ -6,7 +6,8 @@ import {
      getAllDeposits,
      createNairaDepositRequest,
      confirmNairaDepositRequest,
-     cancelNairaDepositRequest
+     cancelNairaDepositRequest,
+     getAllNairaDeposits
  } from '../controllers/deposit.js';
 import { authMiddleware, isAdminMiddleware  } from '../middleware/authMiddleWare.js';
 
@@ -18,8 +19,9 @@ router.put('/confirm/:depositId', authMiddleware, isAdminMiddleware, confirmDepo
 router.put('/cancel/:depositId', authMiddleware, isAdminMiddleware, cancelDeposit);
 
 /// NAIRA DEPOSIT
-router.post('/naira-deposit', authMiddleware, createNairaDepositRequest);
-router.post('/naira-deposit/confirm', authMiddleware, isAdminMiddleware, confirmNairaDepositRequest);
-router.post('/naira-deposit/cancel', authMiddleware, isAdminMiddleware, cancelNairaDepositRequest);
+router.post('/fiat/deposit', authMiddleware, createNairaDepositRequest);
+router.post('/fiat/confirm', authMiddleware, isAdminMiddleware, confirmNairaDepositRequest);
+router.post('/fiat/cancel', authMiddleware, isAdminMiddleware, cancelNairaDepositRequest);
+router.get('/fiat', authMiddleware, isAdminMiddleware, getAllNairaDeposits);
 
 export default router;
