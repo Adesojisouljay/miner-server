@@ -195,23 +195,33 @@ export const getUserTransactions = async (req, res) => {
         return res.status(404).json({ success: false, message: 'Asset not found' });
       }
   
-      let convertedAmount;
+      let convertedNairaAmount
+      let convertedCryptoAmount;
       let cryptoAmount;
+      let fiatFee;
+      let cryptoFee;
+      let fiatAmountAfterFee;
+      let cryptoAmountAfterFee;
       if (amountType === 'fiat') {
-        convertedAmount = amount / asset.nairaValue;
-        cryptoAmount = convertedAmount;
+        convertedNairaAmount = amount
+        convertedCryptoAmount = amount / asset.nairaValue;
+        cryptoAmount = convertedCryptoAmount;
+        fiatFee = calculateFee(amount);
+        cryptoFee = fiatFee / asset.nairaValue;
+        fiatAmountAfterFee = amount - fiatFee;
+        cryptoAmountAfterFee = fiatAmountAfterFee / asset.nairaValue;
       } else if (amountType === 'crypto') {
-        convertedAmount = amount * asset.nairaValue;
+        convertedCryptoAmount = amount
+        convertedNairaAmount = amount * asset.nairaValue;
         cryptoAmount = amount;
+        cryptoFee = calculateFee(amount);
+        fiatFee = cryptoFee * asset.nairaValue;
+        cryptoAmountAfterFee = cryptoAmount - cryptoFee;
+        fiatAmountAfterFee = cryptoAmountAfterFee * asset.nairaValue;
       }
-      
-      const fiatFee = calculateFee(convertedAmount);
-      const cryptoFee = fiatFee / asset.nairaValue;
-      
-      const fiatAmountAfterFee = convertedAmount - fiatFee;
-      const cryptoAmountAfterFee = cryptoAmount - cryptoFee;
-      
-      const roundedConvertedAmount = parseFloat(convertedAmount.toFixed(3));
+            
+      const roundedConvertedCryptoAmount = parseFloat(Number(convertedCryptoAmount).toFixed(3));
+      const roundedConvertedNairaAmount = parseFloat(Number(convertedNairaAmount).toFixed(3));
       const roundedCryptoAmount = parseFloat(Number(cryptoAmount).toFixed(3));
       const roundedFiatFee = parseFloat(fiatFee.toFixed(3));
       const roundedCryptoFee = parseFloat(cryptoFee.toFixed(3));
@@ -220,12 +230,13 @@ export const getUserTransactions = async (req, res) => {
   
       res.status(200).json({
         success: true,
-        convertedAmount: roundedConvertedAmount,
-        cryptoAmount: roundedCryptoAmount,
-        fiatFee: roundedFiatFee,
+        convertedCryptoAmount: roundedConvertedCryptoAmount + " " + currency.toUpperCase(),
+        convertedNairaAmount: roundedConvertedNairaAmount + " Naira",
+        cryptoAmount: roundedCryptoAmount + " " + currency.toUpperCase(),
+        fiatFee: roundedFiatFee + " Naira",
         cryptoFee: roundedCryptoFee + currency.toUpperCase(),
-        fiatAmountAfterFee: roundedFiatAmountAfterFee,
-        cryptoAmountAfterFee: roundedCryptoAmountAfterFee + currency.toUpperCase(),
+        fiatAmountAfterFee: roundedFiatAmountAfterFee + " Naira",
+        cryptoAmountAfterFee: roundedCryptoAmountAfterFee + " " + currency.toUpperCase(),
         assetDetails: {
           coinId: asset.coinId,
           symbol: asset.symbol,
