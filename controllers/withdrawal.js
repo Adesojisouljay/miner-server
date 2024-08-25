@@ -126,7 +126,6 @@ export const requestFiatWithdrawal = async (req, res) => {
   try {
     const userId = req.user.userId;
     const { amount, accountNumber, withdrawalToken } = req.body;
-    console.log("data",{amount, accountNumber, withdrawalToken})
 
     if (!amount || !accountNumber || !withdrawalToken) {
       return res.status(400).json({ success: false, message: 'Amount, account number, and withdrawal token are required' });
@@ -152,6 +151,9 @@ export const requestFiatWithdrawal = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Account not found' });
     }
 
+    user.nairaBalance -= amount;
+    user.totalNairaValue -= amount;
+
     const fiatWithdrawal = new FiatWithdrawal({
       userId,
       amount,
@@ -159,7 +161,8 @@ export const requestFiatWithdrawal = async (req, res) => {
         accountNumber: selectedAccount.accountNumber,
         accountName: selectedAccount.accountName,
         bankName: selectedAccount.bankName
-      }
+      },
+      status: 'pending'
     });
 
     await fiatWithdrawal.save();
@@ -192,17 +195,6 @@ export const confirmFiatWithdrawal = async (req, res) => {
     if (fiatWithdrawal.status !== 'pending') {
       return res.status(400).json({ success: false, message: 'Withdrawal request already processed' });
     }
-
-    const user = await User.findById(fiatWithdrawal.userId);
-
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-
-    user.nairaBalance -= fiatWithdrawal.amount;
-    user.totalNairaValue -= fiatWithdrawal.amount;
-
-    await user.save();
 
     fiatWithdrawal.status = 'confirmed';
     await fiatWithdrawal.save();
