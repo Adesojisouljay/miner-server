@@ -7,7 +7,13 @@ const nairaDepositRequestSchema = new mongoose.Schema({
   narration: { type: String, required: true },
   status: { type: String, enum: ['pending', 'completed', 'failed'], default: 'pending' },
   createdAt: { type: Date, default: Date.now },
-//   transactionId: { type: mongoose.Schema.Types.ObjectId, ref: 'TransactionHistory' }  
+  user: {
+    username: { type: String },
+    email: { type: String }
+  },
+  merchant: {
+    username: { type: String }
+  }
 });
 
 const NairaDepositRequest = mongoose.model('NairaDepositRequest', nairaDepositRequestSchema);

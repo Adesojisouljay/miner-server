@@ -25,7 +25,14 @@ export const createNairaDepositRequest = async (req, res) => {
       userId,
       merchantId,
       amount,
-      narration
+      narration,
+      user: {
+        username: user.username,
+        email: user.email,
+      },
+      merchant: {
+        username: merchant.username
+      }
     });
 
     await newNairaDepositRequest.save();
@@ -35,7 +42,7 @@ export const createNairaDepositRequest = async (req, res) => {
       data: {
         depositRequest: newNairaDepositRequest,
         userUsername: user.username,  
-        merchantUsername: merchant.nickname 
+        merchantUsername: merchant.username 
       }
     });
   } catch (error) {
@@ -46,7 +53,7 @@ export const createNairaDepositRequest = async (req, res) => {
 
 export const confirmNairaDepositRequest = async (req, res) => {
   try {
-    const { depositRequestId, sender, receiver, accountNumber, accountHolderName, bankName } = req.body;
+    const { depositRequestId } = req.body;
 
     const depositRequest = await NairaDepositRequest.findById(depositRequestId);
     if (!depositRequest) {
@@ -60,19 +67,19 @@ export const confirmNairaDepositRequest = async (req, res) => {
 
     const newTransactionHistory = new TransactionHistory({ 
       userId: depositRequest.userId,
-      sender,
-      receiver,
+      sender: depositRequest.merchant.username,
+      receiver: depositRequest.user.username,
       memo: depositRequest.narration,
       trxId: depositRequestId,
       blockNumber: "deposit" + Date.now(),
       amount: depositRequest.amount,
       currency: "NGN",
       type: "Naira deposit",
-      bankDetails: {
-        accountNumber,
-        bankName,
-        accountHolderName
-      }
+      // bankDetails: {
+      //   accountNumber,
+      //   bankName,
+      //   accountHolderName
+      // }
     });
 
     await newTransactionHistory.save();
