@@ -160,7 +160,7 @@ export const getUserTransactions = async (req, res) => {
 
         const cryptoAmountAfterFee = amountAfterFee / userAsset.nairaValue;
 
-        userAsset.balance -= cryptoAmountAfterFee;
+        userAsset.balance -= amount;
         userAsset.asseUsdtWorth = userAsset.balance * userAsset.usdValue;
         userAsset.assetNairaWorth = userAsset.balance * userAsset.nairaValue;
     
