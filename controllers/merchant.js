@@ -179,7 +179,16 @@ export const getRandomMerchant = async (req, res) => {
     const randomIndex = Math.floor(Math.random() * merchants.length);
     const selectedMerchant = merchants[randomIndex];
 
-    res.status(200).json({ success: true, data: selectedMerchant });
+    const getShortenedNarration = () => {
+      const prefix = 'FO';
+      const surfix = 'OT';
+      const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase(); // 4 characters
+      return `${prefix}${randomPart}${surfix}`;
+    };    
+
+    const narration = getShortenedNarration();
+
+    res.status(200).json({ success: true, data: selectedMerchant, narration });
   } catch (error) {
     console.error('Error fetching random merchant:', error);
     res.status(500).json({ success: false, error: 'Internal Server Error' });
