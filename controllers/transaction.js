@@ -274,7 +274,7 @@ export const getUserTransactions = async (req, res) => {
     }
   };   
 
-  export const transferNairaBalance = async (req, res) => {
+ export const fiatTransfer = async (req, res) => {
     try {
       const { receiverIdentifier, amount } = req.body;
       const senderId = req.user.userId;
