@@ -175,6 +175,36 @@ export const profile = async (req, res) => {
   }
 };
 
+export const getReceiverProfile = async (req, res) => {
+  const { identifier } = req.params;
+  try {
+    const receiver = await User.findOne({
+      $or: [
+        { email: identifier }, 
+        { username: identifier }
+      ]
+    });
+
+    console.log(receiver);
+
+    if (!receiver) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const dataTosend = {
+      username: receiver.username,
+      firstName: receiver.firstName,
+      lastName: receiver.lastName,
+      email: receiver.email
+    }
+
+    res.status(200).json({ success: true, user: dataTosend });
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    res.status(500).json({ success: false, error: 'Internal Server Error' });
+  }
+};
+
 export const updateProfile = async (req, res) => {
   try {
     const { email, password, username } = req.body;
