@@ -20,7 +20,8 @@ const assetSchema = new mongoose.Schema({
 const accountSchema = new mongoose.Schema({
   accountNumber: { type: String, required: true },
   accountName: { type: String, required: true },
-  bankName: { type: String, required: true }
+  bankName: { type: String, required: true },
+  id: { type: String },
 }, { _id: false });
 
 const userSchema = new mongoose.Schema({
@@ -37,7 +38,7 @@ const userSchema = new mongoose.Schema({
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
   accounts: [accountSchema],
   profileImage: { type: String },
-  resetPasswordToken: { type: String },
+  resetPasswordToken: { type: String }, 
   resetPasswordExpires: { type: Date },
   withdrawalToken: { type: String },
   withdrawalTokenExpires: { type: Date },

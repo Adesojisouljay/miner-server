@@ -136,9 +136,10 @@ export const login = async (req, res) => {
 
     const userWithoutPassword = {
       _id: user._id,
-      email: user.email,
+      email: user.email, 
       username: user.username,
       assets: user.assets,
+      accounts: user.accounts, 
       nairaBalance: user.nairaBalance,
       totalUsdValue: user.totalUsdValue,
       totalNairaValue: user.totalNairaValue,
@@ -259,8 +260,8 @@ export const addBankAccount = async (req, res) => {
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
-
-    const newAccount = { accountNumber, accountName, bankName };
+    const id =`acc-${new Date().getTime()}`
+    const newAccount = { id, accountNumber, accountName, bankName };
 
     user.accounts.push(newAccount);
 
@@ -269,6 +270,34 @@ export const addBankAccount = async (req, res) => {
     res.status(200).json({ success: true, message: 'Bank account added successfully', accounts: user.accounts });
   } catch (error) {
     console.error('Error adding bank account:', error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+};
+
+export const deleteBankAccount = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { accountId } = req.body;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const accountIndex = user.accounts.findIndex(account => account.id === accountId);
+
+    if (accountIndex === -1) {
+      return res.status(404).json({ success: false, message: 'Bank account not found' });
+    }
+
+    user.accounts.splice(accountIndex, 1); // Remove the account from the array
+
+    await user.save();
+
+    res.status(200).json({ success: true, message: 'Bank account deleted successfully', accounts: user.accounts });
+  } catch (error) {
+    console.error('Error deleting bank account:', error);
     res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 };
