@@ -30,9 +30,29 @@ export const requestWithdrawalToken = async (req, res) => {
     const mailOptions = {
       to: user.email,
       from: process.env.OUTLOOK_USER,
-      subject: 'Withdrawal Token',
-      text: `Your withdrawal token is ${withdrawalToken}. This token is valid for 15 minutes.`,
+      subject: 'Your Secure Withdrawal Token from EkzaTrade',
+      text: `Dear ${user.username},
+    
+    We hope this message finds you well. We noticed that you've initiated a withdrawal request on your EkzaTrade account. To ensure your security, we’ve generated a unique withdrawal token just for you.
+    
+    🔐 **Your Secure Withdrawal Token**: ${withdrawalToken}
+    
+    Please enter this token within the next 15 minutes to complete your transaction. This is a one-time use code and will expire promptly to protect your account.
+    
+    **Why this extra step?**
+    At EkzaTrade, your security is our top priority. This token adds an additional layer of protection, ensuring that your funds are safe and only accessible by you.
+    
+    If you didn’t request this withdrawal or have any concerns, please reach out to our support team immediately at [Support Email/Contact Info]. We're here to help 24/7.
+    
+    Thank you for choosing EkzaTrade. We’re proud to be your trusted partner in trading.
+    
+    Warm regards,
+    
+    The EkzaTrade Team
+    [ekzatrade@outlook.com]
+    `,
     };
+    
 
     await transporter.sendMail(mailOptions);
 
