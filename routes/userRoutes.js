@@ -11,11 +11,12 @@ import {register,
     getReceiverProfile
 } from '../controllers/user.js';
 import { authMiddleware, isAdminMiddleware } from '../middleware/authMiddleWare.js';
+import { loginRateLimiter } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
 
 router.post('/register', register);
-router.post('/login', login);
+router.post('/login',loginRateLimiter, login);
 router.post('/password-reset-token', authMiddleware, requestPasswordReset);
 router.post('/password-reset', authMiddleware, resetPassword);
 router.post('/add-account', authMiddleware, addBankAccount);
