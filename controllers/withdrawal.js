@@ -5,7 +5,8 @@ import Mining from '../models/Mining.js';
 import { transferOp } from '../hive/operations.js';
 import { getWithdrawalDetails } from '../hive/operations.js';
 import TransactionHistory from '../models/transactionHistory.js';
-import { transporter } from '../utils/nodemailer.js';
+import { requestWithdrawalTokenEmail, transactionEmail } from '../utils/nodemailer.js';
+import messages from '../messages/index.js';
 
 const acc = process.env.HIVE_ACC
  
@@ -27,34 +28,9 @@ export const requestWithdrawalToken = async (req, res) => {
 
     await user.save();
 
-    const mailOptions = {
-      to: user.email,
-      from: process.env.OUTLOOK_USER,
-      subject: 'Your Secure Withdrawal Token from EkzaTrade',
-      text: `Dear ${user.username},
-    
-    We hope this message finds you well. We noticed that you've initiated a withdrawal request on your EkzaTrade account. To ensure your security, we’ve generated a unique withdrawal token just for you.
-    
-    🔐 **Your Secure Withdrawal Token**: ${withdrawalToken}
-    
-    Please enter this token within the next 15 minutes to complete your transaction. This is a one-time use code and will expire promptly to protect your account.
-    
-    **Why this extra step?**
-    At EkzaTrade, your security is our top priority. This token adds an additional layer of protection, ensuring that your funds are safe and only accessible by you.
-    
-    If you didn’t request this withdrawal or have any concerns, please reach out to our support team immediately at [Support Email/Contact Info]. We're here to help 24/7.
-    
-    Thank you for choosing EkzaTrade. We’re proud to be your trusted partner in trading.
-    
-    Warm regards,
-    
-    The EkzaTrade Team
-    [ekzatrade@outlook.com]
-    `,
-    };
-    
+    const emailContent = messages.transactionEmail(user.username, withdrawalToken);
 
-    await transporter.sendMail(mailOptions);
+    requestWithdrawalTokenEmail(user.email, messages.withdrawalSubject, emailContent);
 
     return res.status(200).json({ success: true, message: 'Withdrawal token sent to your email' });
   } catch (error) {
@@ -134,6 +110,9 @@ export const processHiveWithdrawal = async (req, res) => {
 
     console.log('User after withdrawal:', user);
 
+    const emailContent = messages.withdrawalCompletedEmail(user.username, amount, currency);
+    transactionEmail(user.email, messages.withdrawalCompletedSubject, emailContent);
+
     return res.status(200).json({ success: true, message: 'Withdrawal successful', result });
   } catch (error) {
     console.error('Error processing withdrawal:', error.message);
@@ -191,6 +170,9 @@ export const requestFiatWithdrawal = async (req, res) => {
     user.withdrawalTokenExpires = null;
     await user.save();
 
+    const emailContent = messages.withdrawalReceivedEmail(user.username, amount, "NGN");
+    transactionEmail(user.email, messages.withdrawalReceivedSubject, emailContent);
+
     return res.status(200).json({ success: true, message: 'Withdrawal request placed successfully' });
   } catch (error) {
     console.error('Error requesting fiat withdrawal:', error);
@@ -200,7 +182,7 @@ export const requestFiatWithdrawal = async (req, res) => {
 
 export const confirmFiatWithdrawal = async (req, res) => {
   try {
-    const { withdrawalId } = req.body;
+    const { withdrawalId, amount } = req.body;
 
     if (!withdrawalId) {
       return res.status(400).json({ success: false, message: 'Withdrawal ID is required' });
@@ -216,8 +198,15 @@ export const confirmFiatWithdrawal = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Withdrawal request already processed' });
     }
 
+    const user = await User.findById(fiatWithdrawal.userId);
+    console.log(user)
+
     fiatWithdrawal.status = 'confirmed';
     await fiatWithdrawal.save();
+
+    const emailContent = messages.withdrawalCompletedEmail(user.username, amount, "NGN");
+    transactionEmail(user.email, messages.withdrawalCompletedSubject, emailContent);
+
 
     return res.status(200).json({ success: true, message: 'Withdrawal confirmed successfully' });
   } catch (error) {
@@ -228,7 +217,7 @@ export const confirmFiatWithdrawal = async (req, res) => {
 
 export const cancelFiatWithdrawal = async (req, res) => {
   try {
-    const { withdrawalId } = req.body;
+    const { withdrawalId, amount } = req.body;
 
     if (!withdrawalId) {
       return res.status(400).json({ success: false, message: 'Withdrawal ID is required' });
@@ -245,6 +234,7 @@ export const cancelFiatWithdrawal = async (req, res) => {
     }
 
     const user = await User.findById(fiatWithdrawal.userId);
+    console.log(user)
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
@@ -256,8 +246,12 @@ export const cancelFiatWithdrawal = async (req, res) => {
 
     await user.save();
 
+    
     fiatWithdrawal.status = 'canceled';
     await fiatWithdrawal.save();
+    
+    const emailContent = messages.withdrawalCanceledEmail(user.username, amount, "NGN");
+    transactionEmail(user.email, messages.withdrawalCanceledSubject, emailContent);
 
     return res.status(200).json({ success: true, message: 'Withdrawal canceled successfully' });
   } catch (error) {
