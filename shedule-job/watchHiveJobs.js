@@ -5,7 +5,7 @@ import ProcessedTrx from '../models/ProcessedTrx.js';
 import transactionHistory from '../models/transactionHistory.js';
 import axios from 'axios';
 import { transactionEmail } from '../utils/nodemailer.js';
-import messages from '../messages/index.js';
+import messages from '../variables/messages.js';
 
 const HIVE_API_URL = 'https://api.hive.blog';
 let lastProcessedBlockNum = 0;

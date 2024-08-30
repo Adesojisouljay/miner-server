@@ -1,10 +1,10 @@
 import mongoose from 'mongoose';
 
 const assetSchema = new mongoose.Schema({
-  currency: { type: String, required: true }, // e.g., 'hive', 'hbd', 'btc'
+  currency: { type: String, required: true },
   balance: { type: Number, default: 0 },
-  depositAddress: { type: String, required: true },
-  memo: { type: String, required: true },
+  depositAddress: { type: String },
+  memo: { type: String },
   usdValue: { type: Number, default: 0 },
   nairaValue: { type: Number, default: 0 },
   assetNairaWorth: { type: Number, default: 0 },

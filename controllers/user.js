@@ -4,6 +4,7 @@ import User from '../models/Users.js';
 import { fetchCryptoData } from '../utils/coingecko.js';
 import { generateUserMemo, validatePassword } from '../utils/index.js';
 import { transporter } from '../utils/nodemailer.js';
+import { encryptPrivateKey } from '../utils/index.js';
 
 const resetLink = `${process.env.FRONTEND_URL}/reset-password`;
 
@@ -396,3 +397,93 @@ export const resetPassword = async (req, res) => {
     res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 };
+
+export const addUserAsset = async (req, res) => {
+  try {
+    const { currency } = req.body;
+    const userId = req.user.userId;
+    
+    const user = await User.findById(userId);
+
+    if (!currency) {
+      return res.status(404).json({ success: false, message: 'Please provide currency' });
+    }
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    if (user.assets.some(asset => asset.currency === currency)) {
+      return res.status(400).json({ success: false, message: 'Asset already exists' });
+    }
+
+    const { usdData, ngnData } = await fetchCryptoData();
+    const cryptoInfoUSD = usdData.find(crypto => crypto.id === currency);
+    const cryptoInfoNGN = ngnData.find(crypto => crypto.id === currency);
+
+    const memo = await generateUserMemo();
+
+    const depositAddress = ['hive', 'hbd'].includes(currency.toLowerCase()) 
+      ? process.env.HIVE_ACC 
+      : '';
+
+    const newAsset = {
+      currency,
+      balance: 0,
+      depositAddress,
+      memo,
+      usdValue: cryptoInfoUSD ? cryptoInfoUSD.current_price : 0,
+      nairaValue: cryptoInfoNGN ? cryptoInfoNGN.current_price : 0,
+      asseUsdtWorth: 0,
+      assetNairaWorth: 0,
+      coinId: cryptoInfoUSD ? cryptoInfoUSD.id : null,
+      symbol: cryptoInfoUSD ? cryptoInfoUSD.symbol : null,
+      priceChange: cryptoInfoUSD ? cryptoInfoUSD.price_change_24h : 0,
+      percentageChange: cryptoInfoUSD ? cryptoInfoUSD.price_change_percentage_24h : 0,
+      image: cryptoInfoUSD ? cryptoInfoUSD.image : null,
+      privateKey: null,
+    };
+
+    user.assets.push(newAsset);
+    await user.save();
+
+    res.status(200).json({ success: true, message: 'Asset added successfully', asset: newAsset });
+  } catch (error) {
+    console.error('Error adding asset:', error);
+    res.status(500).json({ success: false, error: 'Internal Server Error' });
+  }
+};
+
+export const addWalletAddress = async (req, res) => {
+  try {
+    const { userId } = req.user;
+    const { currency } = req.body;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const asset = user.assets.find(asset => asset.currency === currency);
+
+    if (!asset) {
+      return res.status(400).json({ success: false, message: 'Asset not found' });
+    }
+
+    const address = "Tgrj8yiuyighhh0u09889uoihnkhh"
+    const privKey ="testPrivekey"
+    const encryptedPrivateKey = encryptPrivateKey(privKey)
+
+    asset.depositAddress = address;
+    asset.privateKey = encryptedPrivateKey;
+
+    await user.save();
+
+    res.status(200).json({ success: true, message: 'Wallet address added successfully', asset });
+  } catch (error) {
+    console.error('Error adding wallet address:', error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+};
+
