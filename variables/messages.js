@@ -143,6 +143,24 @@ const messages = {
       [ekzatrade@outlook.com]
     `,
     depositPendingSubject: 'Deposit Pending Confirmation',
+    failedLoginAttemptsEmail: (username) => `
+    Dear ${username},
+
+    We noticed multiple failed login attempts on your EkzaTrade account. For your security, your account has been temporarily suspended for 1 hour.
+
+    **What to do next?**
+    Please try logging in again after the suspension period has ended. If you believe this action was taken in error or have any concerns, please contact our support team immediately at [ekzatrade@outlook.com].
+
+    Your account security is very important to us, and we're here to assist you with any issues you might have.
+
+    Thank you for your understanding.
+
+    Warm regards,
+
+    The EkzaTrade Team
+    [ekzatrade@outlook.com]
+  `,
+  failedLoginAttemptsSubject: 'Account Temporarily Suspended Due to Failed Login Attempts',
 };
 
 export default messages;

@@ -6,7 +6,7 @@ import { transferOp } from '../hive/operations.js';
 import { getWithdrawalDetails } from '../hive/operations.js';
 import TransactionHistory from '../models/transactionHistory.js';
 import { requestWithdrawalTokenEmail, transactionEmail } from '../utils/nodemailer.js';
-import messages from '../messages/index.js';
+import messages from '../variables/messages.js';
 
 const acc = process.env.HIVE_ACC
  
