@@ -7,6 +7,7 @@ import miningRoutes from "./routes/miningRoutes.js"
 import merchantRoutes from './routes/merchants.js';
 import transactionRoute from "./routes/transactionRoutes.js"
 import kycRoute from "./routes/kycRoutes.js"
+import crytpoData from "./routes/cryptoDataRoutes.js"
 import connectDB from './mongoDb.js';
 // import miningJob  from './shedule-job/sheduleJobs.js';
 import watchHiveBlocks from './shedule-job/watchHiveJobs.js';
@@ -36,6 +37,7 @@ app.use('/api/mining', miningRoutes);
 app.use('/api/merchant', merchantRoutes);
 app.use("/api/transactions", transactionRoute);
 app.use("/api/kyc", kycRoute);
+app.use("/api/crypto-data", crytpoData);
 
 // miningJob.start();
 watchHiveBlocks.start();
