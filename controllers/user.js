@@ -403,35 +403,38 @@ export const resetPassword = async (req, res) => {
 
 export const addUserAsset = async (req, res) => {
   try {
-    const { currency } = req.body;
+    const { coinId } = req.body;
     const userId = req.user.userId;
     
     const user = await User.findById(userId);
 
-    if (!currency) {
-      return res.status(404).json({ success: false, message: 'Please provide currency' });
+    if (!coinId) {
+      return res.status(404).json({ success: false, message: 'Please provide coinId' });
     }
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    if (user.assets.some(asset => asset.currency === currency)) {
+    if (user.assets.some(asset => asset.coinId === coinId)) {
       return res.status(400).json({ success: false, message: 'Asset already exists' });
     }
 
     const { usdData, ngnData } = await fetchCryptoData();
-    const cryptoInfoUSD = usdData.find(crypto => crypto.id === currency);
-    const cryptoInfoNGN = ngnData.find(crypto => crypto.id === currency);
+    const cryptoInfoUSD = usdData.find(crypto => crypto.id === coinId);
+    const cryptoInfoNGN = ngnData.find(crypto => crypto.id === coinId);
 
     const memo = await generateUserMemo();
+    const address = "Tgrj8yiuyighhh0u09889uoihnkhh"
+    const privKey ="testPrivekey"
+    const encryptedPrivateKey = encryptPrivateKey(privKey)
 
-    const depositAddress = ['hive', 'hbd'].includes(currency.toLowerCase()) 
+    const depositAddress = ['hive', 'hbd'].includes(coinId.toLowerCase()) 
       ? process.env.HIVE_ACC 
-      : '';
+      : address;
 
     const newAsset = {
-      currency,
+      currency: coinId,
       balance: 0,
       depositAddress,
       memo,
@@ -445,7 +448,7 @@ export const addUserAsset = async (req, res) => {
       priceChangeNgn: cryptoInfoNGN ? cryptoInfoNGN.price_change_24h : 0,
       percentageChange: cryptoInfoUSD ? cryptoInfoUSD.price_change_percentage_24h : 0,
       image: cryptoInfoUSD ? cryptoInfoUSD.image : null,
-      privateKey: null,
+      privateKey: encryptedPrivateKey,
     };
 
     user.assets.push(newAsset);
@@ -458,6 +461,7 @@ export const addUserAsset = async (req, res) => {
   }
 };
 
+////might not be needed again because i added this logic to add asset func
 export const generateWalletAddress = async (req, res) => {
   try {
     const { userId } = req.user;
