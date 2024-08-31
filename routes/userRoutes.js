@@ -10,7 +10,7 @@ import {register,
     resetPassword,
     getReceiverProfile,
     addUserAsset,
-    addWalletAddress
+    generateWalletAddress
 } from '../controllers/user.js';
 import { authMiddleware, isAdminMiddleware } from '../middleware/authMiddleWare.js';
 import { loginRateLimiter, logIpAddress } from '../middleware/rateLimiter.js';
@@ -28,7 +28,7 @@ router.get('/receiver-profile/:identifier', getReceiverProfile);
 router.put('/profile', authMiddleware, updateProfile);
 router.put('/update-role', authMiddleware, isAdminMiddleware, updateRole);
 router.post('/add-asset', authMiddleware, addUserAsset);
-router.put('/add-wallet-address', authMiddleware, addWalletAddress);
+router.put('/generate-address', authMiddleware, generateWalletAddress);
 
 
 export default router;
