@@ -458,7 +458,7 @@ export const addUserAsset = async (req, res) => {
   }
 };
 
-export const addWalletAddress = async (req, res) => {
+export const generateWalletAddress = async (req, res) => {
   try {
     const { userId } = req.user;
     const { currency } = req.body;
