@@ -1,23 +1,22 @@
-import { fetchCryptoData } from "../utils/coingecko.js";
+import CryptoData from "../models/CryptoData.js";
 
 export const getCrytpoData = async (req, res) => {
+  try {
+    const cryptoData = await CryptoData.findOne().sort({ lastUpdated: -1 });
 
-    try {
-      const data = await fetchCryptoData();
-      if (data) {
-        res.json({
-          success: true,
-          cryptoData:{
-          usdData: data.usdData,
-          ngnData: data.ngnData
+    if (cryptoData) {
+      res.json({
+        success: true,
+        cryptoData: {
+          usdData: cryptoData.usdData,
+          ngnData: cryptoData.ngnData
         }
-        });
-      } else {
-        res.status(500).json({ success: false, message: 'Failed to fetch cryptocurrency data.' });
-      }
-    } catch (error) {
-      console.error('Error in /crypto-data endpoint:', error);
-      res.status(500).json({ success: false, message: 'An error occurred while processing your request.' });
+      });
+    } else {
+      res.status(404).json({ success: false, message: 'No cryptocurrency data available.' });
     }
+  } catch (error) {
+    console.error('Error fetching crypto data from DB:', error);
+    res.status(500).json({ success: false, message: 'An error occurred while processing your request.' });
   }
-  
+};

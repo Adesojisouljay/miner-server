@@ -11,6 +11,7 @@ const updateAssetValues = async () => {
 
       const { id, symbol, current_price: usdPrice, price_change_24h, price_change_percentage_24h, image } = usdInfo;
       const ngnPrice = ngnInfo ? ngnInfo.current_price : 0;
+      const ngnPriceChange = ngnInfo ? ngnInfo.price_change_24h : 0;
 
       const users = await User.find({ 'assets.coinId': id });
 
@@ -22,7 +23,8 @@ const updateAssetValues = async () => {
           if (asset.coinId === id) {
             asset.usdValue = usdPrice;
             asset.nairaValue = ngnPrice;
-            asset.priceChange = price_change_24h;
+            asset.priceChangeUsd = price_change_24h;
+            asset.priceChangeNgn = ngnPriceChange;
             asset.percentageChange = price_change_percentage_24h;
             asset.image = image;
             asset.asseUsdtWorth = asset.balance * usdPrice;
@@ -45,4 +47,4 @@ const updateAssetValues = async () => {
   }
 };
 
-export const updateCryptos = cron.schedule('*/1 * * * *', updateAssetValues);
+export const updateCryptos = cron.schedule('*/5 * * * *', updateAssetValues);

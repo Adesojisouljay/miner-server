@@ -35,6 +35,6 @@ export const loginRateLimiter = rateLimiter({
 
 export const logIpAddress = (req, res, next) => {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.log(`Request IP Address: ${ip}`);
+    // console.log(`Request IP Address: ${ip}`);
     next();
   };
