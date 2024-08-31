@@ -53,7 +53,8 @@ export const register = async (req, res) => {
           assetNairaWorth: 0,
           coinId: null,
           symbol: null,
-          priceChange: 0,
+          priceChangeUsd: 0,
+          priceChangeNgn: 0,
           percentageChange: 0,
           image: null,
           privateKey: null
@@ -69,7 +70,8 @@ export const register = async (req, res) => {
           assetNairaWorth: 0,
           coinId: null,
           symbol: null,
-          priceChange: 0,
+          priceChangeUsd: 0,
+          priceChangeNgn: 0,
           percentageChange: 0,
           image: null,
           privateKey: null
@@ -92,7 +94,8 @@ export const register = async (req, res) => {
         asset.coinId = cryptoInfoUSD.id;
         asset.symbol = cryptoInfoUSD.symbol;
         asset.usdValue = cryptoInfoUSD.current_price;
-        asset.priceChange = cryptoInfoUSD.price_change_24h;
+        asset.priceChangeUsd = cryptoInfoUSD.price_change_24h;
+        asset.priceChangeNgn = cryptoInfoNGN.price_change_24h;
         asset.percentageChange = cryptoInfoUSD.price_change_percentage_24h;
         asset.image = cryptoInfoUSD.image;
         asset.asseUsdtWorth = asset.usdValue * asset.balance;
@@ -438,7 +441,8 @@ export const addUserAsset = async (req, res) => {
       assetNairaWorth: 0,
       coinId: cryptoInfoUSD ? cryptoInfoUSD.id : null,
       symbol: cryptoInfoUSD ? cryptoInfoUSD.symbol : null,
-      priceChange: cryptoInfoUSD ? cryptoInfoUSD.price_change_24h : 0,
+      priceChangeUsd: cryptoInfoUSD ? cryptoInfoUSD.price_change_24h : 0,
+      priceChangeNgn: cryptoInfoNGN ? cryptoInfoNGN.price_change_24h : 0,
       percentageChange: cryptoInfoUSD ? cryptoInfoUSD.price_change_percentage_24h : 0,
       image: cryptoInfoUSD ? cryptoInfoUSD.image : null,
       privateKey: null,

@@ -10,7 +10,7 @@ export const coinIdsArray = [
     'polkadot',      // DOT
     'litecoin',      // LTC
     'tron',          // TRX
-    'polygon',       // MATIC
+    'matic-network',       // MATIC
     'shiba-inu',     // SHIB
     'avalanche-2',   // AVAX
     'chainlink',     // LINK
@@ -24,7 +24,7 @@ export const coinIdsArray = [
     'tezos',         // XTZ
     'aave',          // AAVE
     'monero',        // XMR
-    'ape-coin',      // APE
+    'apecoin',      // APE
     'hive',          // HIVE
     'hive_dollar',   // HBD
     'steem',         // STEEM
