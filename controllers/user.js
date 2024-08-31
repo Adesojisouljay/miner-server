@@ -420,7 +420,9 @@ export const addUserAsset = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Asset already exists' });
     }
 
-    const { usdData, ngnData } = await fetchCryptoData();
+    const response = await fetchCryptoData();
+    const { usdData, ngnData } = response;
+    console.log(response.ngnData)
     const cryptoInfoUSD = usdData.find(crypto => crypto.id === coinId);
     const cryptoInfoNGN = ngnData.find(crypto => crypto.id === coinId);
 
@@ -457,6 +459,38 @@ export const addUserAsset = async (req, res) => {
     res.status(200).json({ success: true, message: 'Asset added successfully', asset: newAsset });
   } catch (error) {
     console.error('Error adding asset:', error);
+    res.status(500).json({ success: false, error: 'Internal Server Error' });
+  }
+};
+
+export const removeUserAsset = async (req, res) => {
+  try {
+    const { coinId } = req.body;
+    const userId = req.user.userId;
+
+    const user = await User.findById(userId);
+
+    if (!coinId) {
+      return res.status(400).json({ success: false, message: 'Please provide coinId' });
+    }
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const assetIndex = user.assets.findIndex(asset => asset.coinId === coinId);
+
+    if (assetIndex === -1) {
+      return res.status(404).json({ success: false, message: 'Asset not found' });
+    }
+
+    user.assets.splice(assetIndex, 1);
+
+    await user.save();
+
+    res.status(200).json({ success: true, message: 'Asset removed successfully' });
+  } catch (error) {
+    console.error('Error removing asset:', error);
     res.status(500).json({ success: false, error: 'Internal Server Error' });
   }
 };
