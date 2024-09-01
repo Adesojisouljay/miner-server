@@ -4,7 +4,7 @@ import User from '../models/Users.js';
 import ProcessedTrx from '../models/ProcessedTrx.js';
 import transactionHistory from '../models/transactionHistory.js';
 import axios from 'axios';
-import { transactionEmail } from '../utils/nodemailer.js';
+import { activitiesEmail } from '../utils/nodemailer.js';
 import messages from '../variables/messages.js';
 
 const HIVE_API_URL = 'https://api.hive.blog';
@@ -134,7 +134,7 @@ const watchHiveBlocks = cron.schedule('*/0.1 * * * * *', async () => {
               console.log(`Updated balance and asset worth for user ${user._id}`);
 
               const emailContent = messages.depositReceivedEmail(user.username, amount, currency);
-              transactionEmail(user.email, messages.depositReceivedSubject, emailContent);
+              activitiesEmail(user.email, messages.depositReceivedSubject, emailContent);
 
               const newTransaction = new transactionHistory({
                 userId: user._id,

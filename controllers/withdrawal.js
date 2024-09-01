@@ -5,7 +5,7 @@ import Mining from '../models/Mining.js';
 import { transferOp } from '../hive/operations.js';
 import { getWithdrawalDetails } from '../hive/operations.js';
 import TransactionHistory from '../models/transactionHistory.js';
-import { requestWithdrawalTokenEmail, transactionEmail } from '../utils/nodemailer.js';
+import { activitiesEmail } from '../utils/nodemailer.js';
 import messages from '../variables/messages.js';
 
 const acc = process.env.HIVE_ACC
@@ -28,9 +28,9 @@ export const requestWithdrawalToken = async (req, res) => {
 
     await user.save();
 
-    const emailContent = messages.transactionEmail(user.username, withdrawalToken);
+    const emailContent = messages.sendWithdrawalToken(user.username, withdrawalToken);
 
-    requestWithdrawalTokenEmail(user.email, messages.withdrawalSubject, emailContent);
+    activitiesEmail(user.email, messages.withdrawalSubject, emailContent);
 
     return res.status(200).json({ success: true, message: 'Withdrawal token sent to your email' });
   } catch (error) {
@@ -111,7 +111,7 @@ export const processHiveWithdrawal = async (req, res) => {
     console.log('User after withdrawal:', user);
 
     const emailContent = messages.withdrawalCompletedEmail(user.username, amount, currency);
-    transactionEmail(user.email, messages.withdrawalCompletedSubject, emailContent);
+    activitiesEmail(user.email, messages.withdrawalCompletedSubject, emailContent);
 
     return res.status(200).json({ success: true, message: 'Withdrawal successful', result });
   } catch (error) {
@@ -171,7 +171,7 @@ export const requestFiatWithdrawal = async (req, res) => {
     await user.save();
 
     const emailContent = messages.withdrawalReceivedEmail(user.username, amount, "NGN");
-    transactionEmail(user.email, messages.withdrawalReceivedSubject, emailContent);
+    activitiesEmail(user.email, messages.withdrawalReceivedSubject, emailContent);
 
     return res.status(200).json({ success: true, message: 'Withdrawal request placed successfully' });
   } catch (error) {
@@ -205,7 +205,7 @@ export const confirmFiatWithdrawal = async (req, res) => {
     await fiatWithdrawal.save();
 
     const emailContent = messages.withdrawalCompletedEmail(user.username, amount, "NGN");
-    transactionEmail(user.email, messages.withdrawalCompletedSubject, emailContent);
+    activitiesEmail(user.email, messages.withdrawalCompletedSubject, emailContent);
 
 
     return res.status(200).json({ success: true, message: 'Withdrawal confirmed successfully' });
@@ -251,7 +251,7 @@ export const cancelFiatWithdrawal = async (req, res) => {
     await fiatWithdrawal.save();
     
     const emailContent = messages.withdrawalCanceledEmail(user.username, amount, "NGN");
-    transactionEmail(user.email, messages.withdrawalCanceledSubject, emailContent);
+    activitiesEmail(user.email, messages.withdrawalCanceledSubject, emailContent);
 
     return res.status(200).json({ success: true, message: 'Withdrawal canceled successfully' });
   } catch (error) {
