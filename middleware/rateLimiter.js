@@ -1,7 +1,7 @@
 import rateLimiter from 'express-rate-limit';
 import User from '../models/Users.js';
 import messages from '../variables/messages.js';
-import { ActivitiesEmail } from '../utils/nodemailer.js';
+import { activitiesEmail } from '../utils/nodemailer.js';
 
 export const loginRateLimiter = rateLimiter({
   windowMs: 60 * 60 * 1000,
@@ -23,7 +23,7 @@ export const loginRateLimiter = rateLimiter({
       }
 
       const emailContent = messages.failedLoginAttemptsEmail(user.username);
-      ActivitiesEmail(user.email, messages.failedLoginAttemptsSubject, emailContent);      
+      activitiesEmail(user.email, messages.failedLoginAttemptsSubject, emailContent);      
       console.log("Suspension email sent to", user.email);
 
     } catch (error) {

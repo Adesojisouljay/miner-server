@@ -40,8 +40,8 @@ export const transporter = nodemailer.createTransport({
     }
   };
 
-  ////this function alone shouls be enough
-  export const ActivitiesEmail = async (to, subject, text) => {
+  ////this function alone shouls be enough 
+  export const activitiesEmail = async (to, subject, text) => {
     const mailOptions = {
       from: process.env.OUTLOOK_USER,
       to,

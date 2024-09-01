@@ -1,6 +1,6 @@
 const messages = {
     // Withdrawal Emails
-    withdrawalEmail: (username, withdrawalToken) => `
+    sendWithdrawalToken: (username, withdrawalToken) => `
       Dear ${username},
     
       We hope this message finds you well. We noticed that you've initiated a withdrawal request on your EkzaTrade account. To ensure your security, we’ve generated a unique withdrawal token just for you.
@@ -64,7 +64,9 @@ const messages = {
     withdrawalCanceledEmail: (username, amount, currency) => `
       Dear ${username},
     
-      We’re writing to inform you that your withdrawal request for **${amount} ${currency}** has been canceled.
+      We’re writing to inform you that your withdrawal request for **${amount} ${currency}** has been canceled and fund has been reversed to your account.
+
+      Kindly check you balance to confirm reversal.
   
       **Transaction Details:**
       - Amount: **${amount} ${currency}**
