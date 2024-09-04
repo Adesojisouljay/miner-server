@@ -1,5 +1,6 @@
 import express from 'express';
 import bodyParser from 'body-parser';
+import http from 'http';
 import depositRoutes from './routes/depositRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import withdrawalRoutes from './routes/withdrawalRoutes.js';
@@ -13,8 +14,10 @@ import connectDB from './mongoDb.js';
 import watchHiveBlocks from './shedule-job/watchHiveJobs.js';
 import cors from "cors"
 import { updateCryptos } from './utils/updateCryptos.js';
+import { initializeSocketIO } from './sockets/index.js';
 
 const app = express();
+const server = http.createServer(app);
 const PORT = process.env.PORT || 2000;
 
 // const corsOptions = {
@@ -43,7 +46,9 @@ app.use("/api/crypto-data", crytpoData);
 watchHiveBlocks.start();
 updateCryptos.start()
 
+initializeSocketIO(server)
+
 // Start server
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
