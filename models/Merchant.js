@@ -14,7 +14,15 @@ const merchantSchema = new mongoose.Schema({
   socialMediaHandle: { type: String, required: true },
   status: { type: String, enum: ['pending', 'approved', 'cancelled'], default: 'pending' },
   isActive: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  online: {
+    type: Boolean,
+    default: false,
+},
+transactionCount: {
+    type: Number,
+    default: 0,
+},
 });
 
 const Merchant = mongoose.model('Merchant', merchantSchema);
