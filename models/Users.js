@@ -36,7 +36,7 @@ const userSchema = new mongoose.Schema({
   nairaBalance: { type: Number, default: 0 },
   totalUsdValue: { type: Number, default: 0 },
   totalNairaValue: { type: Number, default: 0 },
-  role: { type: String, enum: ['user', 'admin'], default: 'user' },
+  role: { type: String, enum: ['user', 'admin', 'merchant', 'support-agent'], default: 'user' },
   accounts: [accountSchema],
   profileImage: { type: String },
   resetPasswordToken: { type: String }, 
