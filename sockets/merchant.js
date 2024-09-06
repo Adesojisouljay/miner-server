@@ -2,7 +2,7 @@ import Merchant from '../models/Merchant.js';
 import P2pChat from '../models/p2pChat.js';
 
 export default (io) => {
-    const p2pChatNamespace = io.of('/chat');
+    const p2pChatNamespace = io.of('/api/chat');
 
     p2pChatNamespace.on('connection', (socket) => {
         const { merchantId, userId } = socket.handshake.query;
@@ -14,7 +14,7 @@ export default (io) => {
             socket.join(roomId);
             console.log(`User ${userId} and Merchant ${merchantId} joined room ${roomId}`);
 
-            Merchant.findByIdAndUpdate(merchantId, { online: true }, { new: true })
+            Merchant.findByIdAndUpdate(merchantId, { online: true }, { new: true })  
                 .then(merchant => {
                     if (merchant) {
                         console.log(`Merchant ${merchant.username} is online`);
