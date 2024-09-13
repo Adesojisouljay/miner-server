@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import mongoose from 'mongoose';
 import User from '../models/Users.js';
 import { fetchCryptoData } from '../utils/coingecko.js';
 import { generateUserMemo, validatePassword } from '../utils/index.js';
@@ -182,25 +183,25 @@ export const profile = async (req, res) => {
 export const getReceiverProfile = async (req, res) => {
   const { identifier } = req.params;
   try {
-    const receiver = await User.findOne({
-      $or: [
-        { email: identifier }, 
-        { username: identifier }
-      ]
-    });
+    const isObjectId = mongoose.Types.ObjectId.isValid(identifier);
+    const query = isObjectId
+      ? { _id: identifier }
+      : { $or: [{ email: identifier }, { username: identifier }] };
+      const receiver = await User.findOne(query);
 
-    console.log(receiver);
-
-    if (!receiver) {
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-
-    const dataTosend = {
-      username: receiver.username,
-      firstName: receiver.firstName,
-      lastName: receiver.lastName,
-      email: receiver.email
-    }
+      
+      if (!receiver) {
+        return res.status(404).json({ success: false, message: 'User not found' });
+      }
+      
+      const dataTosend = {
+        username: receiver.username,
+        firstName: receiver.firstName,
+        lastName: receiver.lastName,
+        email: receiver.email,
+        role: receiver.role
+      }
+      console.log(dataTosend);
 
     res.status(200).json({ success: true, user: dataTosend });
   } catch (error) {
