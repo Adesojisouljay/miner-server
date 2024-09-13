@@ -5,6 +5,7 @@ const nairaDepositRequestSchema = new mongoose.Schema({
   merchantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Merchant', required: true },
   amount: { type: Number, required: true },
   narration: { type: String, required: true },
+  depositMethod: { type: String, enum: ['bank', 'p2p']},
   status: { type: String, enum: ['pending', 'completed', 'failed'], default: 'pending' },
   createdAt: { type: Date, default: Date.now },
   user: {

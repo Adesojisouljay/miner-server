@@ -23,7 +23,7 @@ router.post('/password-reset-token', authMiddleware, requestPasswordReset);
 router.post('/password-reset', authMiddleware, resetPassword);
 router.post('/add-account', authMiddleware, addBankAccount);
 router.delete('/delete-account', authMiddleware, deleteBankAccount);
-router.get('/profile', authMiddleware, profile); ////might not need auth for this
+router.get('/profile', authMiddleware, profile);
 router.get('/receiver-profile/:identifier', getReceiverProfile);
 router.put('/profile', authMiddleware, updateProfile);
 router.put('/update-role', authMiddleware, isAdminMiddleware, updateRole);

@@ -8,7 +8,7 @@ import TransactionHistory from '../models/transactionHistory.js';
 ////////FIAT DEPOSIT LOGICS
 export const createNairaDepositRequest = async (req, res) => {
   try {
-    const { amount, narration, merchantId } = req.body;
+    const { amount, narration, merchantId, depositMethod } = req.body;
     const userId = req.user.userId;
 
     const merchant = await Merchant.findOne({ _id: merchantId, status: 'approved', isActive: true });
@@ -26,6 +26,7 @@ export const createNairaDepositRequest = async (req, res) => {
       merchantId,
       amount,
       narration,
+      depositMethod,
       user: {
         username: user.username,
         email: user.email,
@@ -168,7 +169,21 @@ export const getAllNairaDeposits = async (req, res) => {
   }
 };
 
+export const getNairaDepositById = async (req, res) => {
+  const { narration } = req.params;
+  try {
+    const deposit = await NairaDepositRequest.findOne({ narration });
+    
+    if (!deposit) {
+      return res.status(404).json({ success: false, message: 'Naira deposit not found' });
+    }
 
+    return res.status(200).json({ success: true, data: deposit });
+  } catch (error) {
+    console.error('Error fetching Naira deposit:', error);
+    return res.status(500).json({ success: false, message: 'Internal Server Error', error: error.message });
+  }
+};
 
 
 
