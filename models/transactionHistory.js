@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const transactionHistorySchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Add this line
+  receiverId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Add this line
   sender: { type: String, required: true },
   receiver: { type: String, required: true },
   memo: { type: String, required: false },

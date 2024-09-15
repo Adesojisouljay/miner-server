@@ -19,22 +19,23 @@ function generateBlockNumber() {
 }
 
 export const getUserTransactions = async (req, res) => {
-    try {
-        const userId = req.user.userId;
-    
-        const transactionH = await transactionHistory.find({ userId });
-    
-        if (!transactionH) {
-          return res.status(404).json({ success: false, message: 'transaction record not found' });
-        }
-    
-        res.status(200).json({ success: true, transactionH });
-      } catch (error) {
-        console.error('Error retrieving user mining record:', error);
-        res.status(500).json({ success: false, error: 'Internal Server Error' });
-      }
-    
-  };
+  try {
+    const userId = req.user.userId;
+
+    const transactionH = await transactionHistory.find({ 
+      $or: [{ userId }, { receiverId: userId }] 
+    });
+
+    if (transactionH.length === 0) {
+      return res.status(404).json({ success: false, message: 'Transaction record not found' });
+    }
+
+    res.status(200).json({ success: true, transactionH });
+  } catch (error) {
+    console.error('Error retrieving user transaction record:', error);
+    res.status(500).json({ success: false, error: 'Internal Server Error' });
+  }
+};
 
   export const getAllTransactions = async (req, res) => {
     try {
@@ -309,6 +310,7 @@ export const getUserTransactions = async (req, res) => {
   
       const Transaction = await TransactionHistory.create({
         userId: sender._id,
+        receiverId: receiver._id,
         sender: sender.username,
         receiver: receiver.username,
         memo: 'Transfer Naira balance',
