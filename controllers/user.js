@@ -51,8 +51,8 @@ export const register = async (req, res) => {
           nairaValue: 0,
           asseUsdtWorth: 0,
           assetNairaWorth: 0,
-          coinId: null,
-          symbol: null,
+          coinId: 'hive',
+          symbol: 'hive',
           priceChangeUsd: 0,
           priceChangeNgn: 0,
           percentageChange: 0,
@@ -68,8 +68,8 @@ export const register = async (req, res) => {
           nairaValue: 0,
           asseUsdtWorth: 0,
           assetNairaWorth: 0,
-          coinId: null,
-          symbol: null,
+          coinId: 'hive_dollar',
+          symbol: 'hbd',
           priceChangeUsd: 0,
           priceChangeNgn: 0,
           percentageChange: 0,
@@ -421,10 +421,12 @@ export const addUserAsset = async (req, res) => {
     }
 
     const response = await fetchCryptoData();
-    const { usdData, ngnData } = response;
-    console.log(response.usdData)
-    const cryptoInfoUSD = usdData.find(crypto => crypto.id === coinId);
-    const cryptoInfoNGN = ngnData.find(crypto => crypto.id === coinId);
+    // const { usdData, ngnData } = response;
+     const usdData = response?.usdData;
+    const ngnData = response?.ngnData;
+
+    const cryptoInfoUSD = usdData?.find(crypto => crypto.id === coinId);
+    const cryptoInfoNGN = ngnData?.find(crypto => crypto.id === coinId);
 
     const memo = await generateUserMemo();
 

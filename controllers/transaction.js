@@ -2,6 +2,8 @@ import transactionHistory from '../models/transactionHistory.js';
 import User from '../models/Users.js';
 import Profit from '../models/Profits.js';
 import TransactionHistory from '../models/transactionHistory.js';
+import CryptoData from '../models/CryptoData.js';
+import { takeTransactionFee } from '../utils/admin.js';
 
 const FEE_PERCENTAGE = 2;
 
@@ -57,6 +59,7 @@ export const getUserTransactions = async (req, res) => {
       const { currency, amount, amountType } = req.body;
       const userId = req.user.userId;
       const user = await User.findById(userId);
+      console.log(amount)
   
       if (!user) {
         return res.status(404).json({ success: false, message: 'User not found' });
@@ -82,8 +85,12 @@ export const getUserTransactions = async (req, res) => {
       if (user.nairaBalance < nairaAmount) {
         return res.status(400).json({ success: false, message: 'Insufficient Naira balance' });
       }
-  
-      const fee = calculateFee(nairaAmount);
+
+      // const feeInNaira = calculateFee(nairaAmount);
+      
+      const fee = calculateFee(nairaAmount); /////naira fee
+      const feeInCrypto = fee / userAsset.nairaValue;
+      const cryptoAmount = amount / userAsset.nairaValue
       const amountAfterFee = nairaAmount - fee;
       const assetBalance = amountAfterFee / userAsset.nairaValue;
   
@@ -95,6 +102,7 @@ export const getUserTransactions = async (req, res) => {
       user.totalNairaValue = user.assets.reduce((total, asset) => total + asset.assetNairaWorth, 0);
   
       user.nairaBalance -= nairaAmount;
+      await takeTransactionFee(feeInCrypto, currency);
   
       await user.save();
   
@@ -114,8 +122,10 @@ export const getUserTransactions = async (req, res) => {
       await Profit.create({
         userId,
         currency,
-        amount: nairaAmount,
-        fee,
+        nairaAmount,
+        cryptoAmount: amountType === "fiat" ? cryptoAmount : amount,
+        nairaFee: fee,
+        cryptoFee: feeInCrypto,
         transactionType: 'buy',
         transactionId: transaction._id,
       });
@@ -150,13 +160,14 @@ export const getUserTransactions = async (req, res) => {
         } else if (amountType === 'crypto') {
           nairaAmount = Number(amount) * userAsset.nairaValue;
         }
-        console.log(nairaAmount)
+        console.log("nairaAmount", nairaAmount)
 
         if (Number(nairaAmount) < 500) {
             return res.status(400).json({ success: false, message: 'Cannot sell below 500 Naira' });
         }
 
         const fee = calculateFee(nairaAmount);
+        const feeInCrypto = fee / userAsset.nairaValue;
         const amountAfterFee = nairaAmount - fee;
 
         const cryptoAmountAfterFee = amountAfterFee / userAsset.nairaValue;
@@ -169,6 +180,7 @@ export const getUserTransactions = async (req, res) => {
         user.totalNairaValue = user.assets.reduce((total, asset) => total + asset.assetNairaWorth, 0);
     
         user.nairaBalance += amountAfterFee;
+        await takeTransactionFee(feeInCrypto, currency);
 
         await user.save();
     
@@ -188,8 +200,10 @@ export const getUserTransactions = async (req, res) => {
         await Profit.create({
             userId,
             currency,
-            amount: nairaAmount,
-            fee,
+            nairaAmount,
+            cryptoAmount: amount,
+            nairaFee: fee,
+            cryptoFee: feeInCrypto,
             transactionType: 'sell',
             transactionId: transaction._id,
         });
@@ -325,6 +339,137 @@ export const getUserTransactions = async (req, res) => {
       res.status(200).json({ success: true, message: `Transferred ${amount} Naira successfully`, Transaction });
     } catch (error) {
       console.error('Error transferring Naira balance:', error);
+      res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+  };
+  
+  export const getConversionRate = async (req, res) => {
+    try {
+      const { fromCurrency, toCurrency, amount } = req.body;
+      console.log({ fromCurrency, toCurrency, amount });
+  
+      if (!fromCurrency || !toCurrency || !amount) {
+        return res.status(400).json({ success: false, message: 'Some parameters are missing' });
+      }
+  
+      const cryptoData = await CryptoData.findOne({});
+  
+      if (!cryptoData || !cryptoData.usdData) {
+        return res.status(400).json({ success: false, message: 'Crypto data not found' });
+      }
+  
+      const fromCurrencyData = cryptoData.usdData.find(currency => currency.symbol === fromCurrency.toLowerCase());
+      const toCurrencyData = cryptoData.usdData.find(currency => currency.symbol === toCurrency.toLowerCase());
+  
+      if (!fromCurrencyData || !toCurrencyData) {
+        return res.status(400).json({ success: false, message: 'Invalid currency provided' });
+      }
+  
+      const conversionRate = fromCurrencyData.current_price / toCurrencyData.current_price;
+      const convertedAmount = conversionRate * amount;
+  
+      const fee = calculateFee(convertedAmount);
+      const amountAfterFee = convertedAmount - fee;
+  
+      const roundedConvertedAmount = parseFloat(amountAfterFee.toFixed(6));
+  
+      res.status(200).json({
+        success: true,
+        fromCurrency,
+        toCurrency,
+        amount,
+        conversionRate,
+        convertedAmount: roundedConvertedAmount,
+        fee,
+        message: `You will receive ${roundedConvertedAmount} ${toCurrency} after a ${FEE_PERCENTAGE}% fee.`,
+      });
+    } catch (error) {
+      console.error('Error fetching conversion rate:', error);
+      res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+  };
+
+  export const swapAsset = async (req, res) => {
+    console.log(req.user);
+    try {
+      const { fromCurrency, toCurrency, fromAmount } = req.body;
+      const userId = req.user.userId;
+      const user = await User.findById(userId);
+  
+      if (!fromCurrency || !toCurrency || !fromAmount) {
+        return res.status(400).json({ success: false, message: 'Some parameters are missing' });
+      }
+  
+      if (!user) {
+        return res.status(404).json({ success: false, message: 'User not found' });
+      }
+  
+      const fromAsset = user.assets.find(asset => asset.symbol === fromCurrency);
+      const toAsset = user.assets.find(asset => asset.symbol === toCurrency);
+  
+      if (!fromAsset || !toAsset) {
+        return res.status(400).json({ success: false, message: 'Invalid asset types' });
+      }
+  
+      if (fromAsset.balance < fromAmount) {
+        return res.status(400).json({ success: false, message: `Insufficient ${fromCurrency} balance` });
+      }
+  
+      const fee = calculateFee(fromAmount);
+      const fromAmountAfterFee = fromAmount - fee;
+  
+      const cryptoData = await CryptoData.findOne({});
+  
+      const fromCurrencyData = cryptoData.usdData.find(data => data.symbol === fromCurrency);
+      const toCurrencyData = cryptoData.usdData.find(data => data.symbol === toCurrency);
+  
+      if (!fromCurrencyData || !toCurrencyData) {
+        return res.status(400).json({ success: false, message: 'Crypto data not found' });
+      }
+  
+      const conversionRate = fromCurrencyData.current_price / toCurrencyData.current_price;
+      const toAmount = conversionRate * fromAmountAfterFee;
+  
+      fromAsset.balance -= fromAmount;
+      toAsset.balance += toAmount;
+  
+      user.totalUsdValue = user.assets.reduce((total, asset) => total + (asset.balance * asset.usdValue), 0);
+      user.totalNairaValue = user.assets.reduce((total, asset) => total + (asset.balance * asset.nairaValue), 0);
+  
+      await user.save();
+  
+      const transaction = await TransactionHistory.create({
+        userId,
+        sender: userId.toString(),
+        receiver: userId.toString(),
+        trxId: generateTransactionId(),
+        blockNumber: generateBlockNumber(),
+        fromAmount: fromAmount.toFixed(2),
+        fromCurrency,
+        toAmount: toAmount.toFixed(2),
+        toCurrency,
+        amount: fromAmountAfterFee.toFixed(2),
+        currency: fromCurrency,
+        type: 'swap',
+        bankDetails: {},
+      });
+  
+      await Profit.create({
+        userId,
+        currency: fromCurrency,
+        amount: fromAmount,
+        fee,
+        transactionType: 'swap',
+        transactionId: transaction._id,
+      });
+  
+      res.status(200).json({
+        success: true,
+        message: `Successfully swapped ${fromAmountAfterFee.toFixed(2)} ${fromCurrency} (after ${fee.toFixed(2)} fee) to ${toAmount.toFixed(2)} ${toCurrency}`,
+        transaction,
+      });
+    } catch (error) {
+      console.error('Error swapping asset:', error);
       res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
   };
