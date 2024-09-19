@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 import User from '../models/Users.js';
-import { fetchCryptoData } from './coingecko.js';
+import { fetchCryptoData } from './cryptoUtils.js';
 
 const updateAssetValues = async () => {
   try {

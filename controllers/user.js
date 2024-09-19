@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/Users.js';
-import { fetchCryptoData } from '../utils/coingecko.js';
+import { fetchCryptoData } from '../utils/cryptoUtils.js';
 import { generateUserMemo, validatePassword } from '../utils/index.js';
 import { transporter } from '../utils/nodemailer.js';
 import { encryptPrivateKey } from '../utils/index.js';
