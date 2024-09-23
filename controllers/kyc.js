@@ -1,4 +1,5 @@
 import KYC from '../models/Kyc.js';
+import User from '../models/Users.js';
 
 export const submitKYC = async (req, res) => {
   try {
@@ -26,13 +27,16 @@ export const submitKYC = async (req, res) => {
     }
 
     await kyc.save();
-    
+
+    await User.findByIdAndUpdate(userId, { kyc });
+
     res.status(200).json({ success: true, message: 'KYC documents submitted successfully' });
   } catch (error) {
     console.error('Error submitting KYC:', error.message);
     res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 };
+
 
 export const approveKyc = async (req, res) => {
   try {
@@ -45,6 +49,8 @@ export const approveKyc = async (req, res) => {
 
     kyc.kycStatus = 'verified';
     await kyc.save();
+
+    await User.findByIdAndUpdate(kyc.userId, { kyc: { ...kyc.toObject() } });
 
     res.status(200).json({ success: true, message: 'KYC record verified successfully' });
   } catch (error) {
@@ -65,6 +71,8 @@ export const rejectKyc = async (req, res) => {
     kyc.kycStatus = 'rejected';
     await kyc.save();
 
+    await User.findByIdAndUpdate(kyc.userId, { kyc: { ...kyc.toObject() } });
+
     res.status(200).json({ success: true, message: 'KYC record rejected successfully' });
   } catch (error) {
     console.error('Error rejecting KYC:', error.message);
@@ -73,7 +81,6 @@ export const rejectKyc = async (req, res) => {
 };
 
 export const getAllKyc = async (req, res) => {
-    console.log("object....")
   try {
     const kycs = await KYC.find();
     console.log(kycs)
