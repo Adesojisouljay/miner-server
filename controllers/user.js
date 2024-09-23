@@ -51,8 +51,8 @@ export const register = async (req, res) => {
           nairaValue: 0,
           asseUsdtWorth: 0,
           assetNairaWorth: 0,
-          coinId: null,
-          symbol: null,
+          coinId: 'hive',
+          symbol: 'hive',
           priceChangeUsd: 0,
           priceChangeNgn: 0,
           percentageChange: 0,
@@ -68,8 +68,8 @@ export const register = async (req, res) => {
           nairaValue: 0,
           asseUsdtWorth: 0,
           assetNairaWorth: 0,
-          coinId: null,
-          symbol: null,
+          coinId: 'hive_dollar',
+          symbol: 'hbd',
           priceChangeUsd: 0,
           priceChangeNgn: 0,
           percentageChange: 0,
@@ -421,12 +421,16 @@ export const addUserAsset = async (req, res) => {
     }
 
     const response = await fetchCryptoData();
-    const { usdData, ngnData } = response;
-    console.log(response.ngnData)
-    const cryptoInfoUSD = usdData.find(crypto => crypto.id === coinId);
-    const cryptoInfoNGN = ngnData.find(crypto => crypto.id === coinId);
+    // const { usdData, ngnData } = response;
+     const usdData = response?.usdData;
+    const ngnData = response?.ngnData;
+
+    const cryptoInfoUSD = usdData?.find(crypto => crypto.id === coinId);
+    const cryptoInfoNGN = ngnData?.find(crypto => crypto.id === coinId);
 
     const memo = await generateUserMemo();
+
+     ////Logic for creating account should be here later
     const address = "Tgrj8yiuyighhh0u09889uoihnkhh"
     const privKey ="testPrivekey"
     const encryptedPrivateKey = encryptPrivateKey(privKey)
@@ -438,7 +442,7 @@ export const addUserAsset = async (req, res) => {
     const newAsset = {
       currency: coinId,
       balance: 0,
-      depositAddress,
+      depositAddress: "",
       memo,
       usdValue: cryptoInfoUSD ? cryptoInfoUSD.current_price : 0,
       nairaValue: cryptoInfoNGN ? cryptoInfoNGN.current_price : 0,
@@ -450,7 +454,7 @@ export const addUserAsset = async (req, res) => {
       priceChangeNgn: cryptoInfoNGN ? cryptoInfoNGN.price_change_24h : 0,
       percentageChange: cryptoInfoUSD ? cryptoInfoUSD.price_change_percentage_24h : 0,
       image: cryptoInfoUSD ? cryptoInfoUSD.image : null,
-      privateKey: encryptedPrivateKey,
+      privateKey: "",
     };
 
     user.assets.push(newAsset);
