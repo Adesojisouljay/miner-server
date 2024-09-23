@@ -41,9 +41,9 @@ const userSchema = new mongoose.Schema({
   profileImage: { type: String },
   resetPasswordToken: { type: String }, 
   resetPasswordExpires: { type: Date },
-  withdrawalToken: { type: String },
-  withdrawalTokenExpires: { type: Date },
-  kyc: { type: mongoose.Schema.Types.ObjectId, ref: 'KYC' },
+  token: { type: String },
+  tokenExpires: { type: Date },
+  kyc: { type: Object, default: {} },
   createdAt: { type: Date, default: Date.now }
 });
 

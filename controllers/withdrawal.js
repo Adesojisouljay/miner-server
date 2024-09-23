@@ -23,8 +23,8 @@ export const requestWithdrawalToken = async (req, res) => {
     const withdrawalToken = Math.floor(100000 + Math.random() * 900000).toString();
     const tokenExpiry = Date.now() + 15 * 60 * 1000;
 
-    user.withdrawalToken = withdrawalToken;
-    user.withdrawalTokenExpires = tokenExpiry;
+    user.token = withdrawalToken;
+    user.tokenExpires = tokenExpiry;
 
     await user.save();
 
@@ -54,7 +54,7 @@ export const processHiveWithdrawal = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    if (user.withdrawalToken !== withdrawalToken || Date.now() > user.withdrawalTokenExpires) {
+    if (user.token !== withdrawalToken || Date.now() > user.tokenExpires) {
       return res.status(400).json({ success: false, message: 'Invalid or expired withdrawal token' });
     }
 
@@ -103,8 +103,8 @@ export const processHiveWithdrawal = async (req, res) => {
     user.totalUsdValue = user.assets.reduce((total, asset) => total + (asset.asseUsdtWorth || 0), 0);
     user.totalNairaValue = user.assets.reduce((total, asset) => total + (asset.assetNairaWorth || 0), 0);
 
-    user.withdrawalToken = null;
-    user.withdrawalTokenExpires = null;
+    user.token = null;
+    user.tokenExpires = null;
 
     await user.save();
 
@@ -136,7 +136,7 @@ export const requestFiatWithdrawal = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    if (user.withdrawalToken !== withdrawalToken || Date.now() > user.withdrawalTokenExpires) {
+    if (user.token !== withdrawalToken || Date.now() > user.tokenExpires) {
       return res.status(400).json({ success: false, message: 'Invalid or expired withdrawal token' });
     }
 
@@ -166,8 +166,8 @@ export const requestFiatWithdrawal = async (req, res) => {
 
     await fiatWithdrawal.save();
 
-    user.withdrawalToken = null;
-    user.withdrawalTokenExpires = null;
+    user.token = null;
+    user.tokenExpires = null;
     await user.save();
 
     const emailContent = messages.withdrawalReceivedEmail(user.username, amount, "NGN");

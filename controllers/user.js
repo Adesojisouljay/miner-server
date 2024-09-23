@@ -349,8 +349,8 @@ export const requestPasswordReset = async (req, res) => {
     const resetToken = Math.floor(100000 + Math.random() * 900000).toString();
     const resetTokenExpiry = Date.now() + 15 * 60 * 1000;
 
-    user.resetPasswordToken = resetToken;
-    user.resetPasswordExpires = resetTokenExpiry;
+    user.token = resetToken;
+    user.tokenExpires = resetTokenExpiry;
 
     await user.save();
  
@@ -377,8 +377,8 @@ export const resetPassword = async (req, res) => {
     const { token, newPassword } = req.body;
 
     const user = await User.findOne({
-      resetPasswordToken: token,
-      resetPasswordExpires: { $gt: Date.now() },
+      token: token,
+      tokenExpires: { $gt: Date.now() },
     });
 
     if (!user) {
@@ -389,8 +389,8 @@ export const resetPassword = async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, salt);
 
     user.password = hashedPassword;
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpires = undefined;
+    user.token = undefined;
+    user.tokenExpires = undefined;
 
     await user.save();
 
