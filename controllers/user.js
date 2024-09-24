@@ -211,7 +211,7 @@ export const getReceiverProfile = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const { email, password, username } = req.body;
+    const { email, password, profileImage } = req.body;
     const userId = req.user.userId; 
 
     if (!userId) {
@@ -236,18 +236,13 @@ export const updateProfile = async (req, res) => {
       const hashedPassword = await bcrypt.hash(password, 10);
       updatedFields.password = hashedPassword;
     }
-    if (username && username !== currentUser.username) {
-
-      const existingWalletUser = await User.findOne({ username });
-      if (existingWalletUser && existingWalletUser._id !== userId) {
-        return res.status(400).json({ success: false, message: 'Wallet address already exists' });
-      }
-      updatedFields.username = username;
+    if (profileImage) {
+      updatedFields.profileImage = profileImage;
     }
 
     const updatedUser = await User.findByIdAndUpdate(userId, updatedFields, { new: true });
 
-    res.status(200).json({ success: true, message: 'User profile updated successfully', user: updatedUser });
+    res.status(200).json({ success: true, message: 'User profile updated successfully', profileImage: updatedUser.profileImage });
   } catch (error) {
     console.error('Error updating user profile:', error);
     res.status(500).json({ success: false, error: 'Internal Server Error' });
