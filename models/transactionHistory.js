@@ -7,7 +7,7 @@ const transactionHistorySchema = new mongoose.Schema({
   receiver: { type: String },
   memo: { type: String, required: false },
   trxId: { type: String, required: true, unique: true },
-  blockNumber: { type: String, required: true, unique: true },
+  blockNumber: { type: String, unique: true },
   fromAmount: { type: Number },
   fromCurrency: { type: String },
   toAmount: { type: Number },
@@ -16,6 +16,7 @@ const transactionHistorySchema = new mongoose.Schema({
   amount: { type: String, required: true },
   currency: { type: String, required: true },
   type: { type: String, required: true },
+  status: { type: String, enum: ['pending', 'confirmed', 'canceled'], default: 'pending' },
   bankDetails: {
     accountNumber: { type: String },
     bankName: { type: String },

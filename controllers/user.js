@@ -5,6 +5,7 @@ import { fetchCryptoData } from '../utils/cryptoUtils.js';
 import { generateUserMemo, validatePassword } from '../utils/index.js';
 import { transporter } from '../utils/nodemailer.js';
 import { encryptPrivateKey } from '../utils/index.js';
+import { createBtcWallet } from '../crypto/bitcoin/wallet.js';
 
 const resetLink = `${process.env.FRONTEND_URL}/reset-password`;
 
@@ -423,8 +424,6 @@ export const addUserAsset = async (req, res) => {
     const cryptoInfoUSD = usdData?.find(crypto => crypto.id === coinId);
     const cryptoInfoNGN = ngnData?.find(crypto => crypto.id === coinId);
 
-    const memo = await generateUserMemo();
-
      ////Logic for creating account should be here later
     const address = "Tgrj8yiuyighhh0u09889uoihnkhh"
     const privKey ="testPrivekey"
@@ -438,7 +437,7 @@ export const addUserAsset = async (req, res) => {
       currency: coinId,
       balance: 0,
       depositAddress: "",
-      memo,
+      memo: "",
       usdValue: cryptoInfoUSD ? cryptoInfoUSD.current_price : 0,
       nairaValue: cryptoInfoNGN ? cryptoInfoNGN.current_price : 0,
       asseUsdtWorth: 0,
@@ -498,7 +497,8 @@ export const removeUserAsset = async (req, res) => {
 export const generateWalletAddress = async (req, res) => {
   try {
     const { userId } = req.user;
-    const { currency } = req.body;
+    const { coinId } = req.body;
+    console.log("object....", coinId)
 
     const user = await User.findById(userId);
 
@@ -506,22 +506,35 @@ export const generateWalletAddress = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    const asset = user.assets.find(asset => asset.currency === currency);
+    const asset = user.assets.find(asset => asset.coinId === coinId);
 
     if (!asset) {
       return res.status(400).json({ success: false, message: 'Asset not found' });
     }
 
-    const address = "Tgrj8yiuyighhh0u09889uoihnkhh"
-    const privKey ="testPrivekey"
-    const encryptedPrivateKey = encryptPrivateKey(privKey)
+    let address;
+    let privateKey;
+    let encryptedPrivateKey;
+
+    ///we will use this for addresses that requires mamo
+    const memo = await generateUserMemo();
+
+    if(coinId === "bitcoin") {
+      const bitcoinWallet = createBtcWallet();
+  
+       address = bitcoinWallet.address;
+       privateKey = bitcoinWallet.privateKey;
+       encryptedPrivateKey = encryptPrivateKey(privateKey);
+    } else{
+      return res.status(400).json({ success: false, message: 'Address not available' });
+    }
 
     asset.depositAddress = address;
     asset.privateKey = encryptedPrivateKey;
 
     await user.save();
 
-    res.status(200).json({ success: true, message: 'Wallet address added successfully', asset });
+    res.status(200).json({ success: true, message: 'Wallet address added successfully' });
   } catch (error) {
     console.error('Error adding wallet address:', error);
     res.status(500).json({ success: false, message: 'Internal Server Error' });

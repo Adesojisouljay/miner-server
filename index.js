@@ -9,12 +9,16 @@ import merchantRoutes from './routes/merchants.js';
 import transactionRoute from "./routes/transactionRoutes.js"
 import kycRoute from "./routes/kycRoutes.js"
 import crytpoData from "./routes/cryptoDataRoutes.js"
+import blockchain from "./routes/blockchain.js"
 import connectDB from './mongoDb.js';
 // import miningJob  from './shedule-job/sheduleJobs.js';
 import watchHiveBlocks from './shedule-job/watchHiveJobs.js';
 import cors from "cors"
 import { updateCryptos } from './utils/updateCryptos.js';
 import { initializeSocketIO } from './sockets/index.js';
+// import { initializeWebSocket } from './shedule-job/cryptoJobs.js';
+import { watchAllBtcDeposits, processPendingBtcTransactions } from './shedule-job/cryptoJobs.js';
+import { checkTransactionStatus,sendBitcoin, watchAllBitcoinDeposits, getBitcoinAddressTransactions, getTestnetBitcoinBalance, getBitcoinMainnetBalance } from './crypto/bitcoin/transactions.js';
 
 const app = express();
 const server = http.createServer(app);
@@ -41,10 +45,28 @@ app.use('/api/merchant', merchantRoutes);
 app.use("/api/transactions", transactionRoute);
 app.use("/api/kyc", kycRoute);
 app.use("/api/crypto-data", crytpoData);
+app.use("/api/blockchain", blockchain);
 
 // miningJob.start();
 watchHiveBlocks.start();
-updateCryptos.start()
+updateCryptos.start();
+watchAllBtcDeposits.start();
+processPendingBtcTransactions.start();
+
+
+/////testing function
+// checkTransactionStatus("70b31659f31e64c753643b38e4f327755cd02d8542d3401329ccc60ff4680821")
+// getBitcoinBalance("3HyALaqKpJPiQZcxPJm4GYXxKFkFSWGYHW")
+// getTestnetBitcoinBalance("mt3xPKyMBTt2Mj8tEtZjWpdb2uVZGdWdwo");
+// getBitcoinMainnetBalance("3HyALaqKpJPiQZcxPJm4GYXxKFkFSWGYHW");
+// watchAllBitcoinDeposits()
+// sendBitcoin(
+//   "n4SnstLYf7VjLUjpwLGi8af39Hzvu9zXK8", 
+// "f5f8f9f18b083f9671ccc2538ba14370b55fc30039ceefc485ff87296995a8bd", 
+// "mt3xPKyMBTt2Mj8tEtZjWpdb2uVZGdWdwo", 
+// 0.00002) 
+
+// getBitcoinAddressTransactions("mt3xPKyMBTt2Mj8tEtZjWpdb2uVZGdWdwo")
 
 initializeSocketIO(server)
 

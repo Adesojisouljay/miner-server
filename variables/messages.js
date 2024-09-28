@@ -163,6 +163,48 @@ const messages = {
     [ekzatrade@outlook.com]
   `,
   failedLoginAttemptsSubject: 'Account Temporarily Suspended Due to Failed Login Attempts',
+  depositProcessingEmail: (username, amount, currency, transactionId) => `
+  Dear ${username},
+  
+  We want to inform you that your deposit of **${amount} ${currency}** is currently being processed.
+
+  **Transaction Details:**
+  - Amount: **${amount} ${currency}**
+  - Status: **Processing**
+  - Transaction ID: [${transactionId}](https://blockstream.info/testnet/tx/${transactionId})
+
+  Please allow some time for the transaction to be completed. We will notify you as soon as your deposit is confirmed.
+
+  Thank you for your patience and for choosing EkzaTrade.
+
+  Warm regards,
+
+  The EkzaTrade Team
+  [ekzatrade@outlook.com]
+`,
+depositProcessingSubject: 'Your Deposit is Being Processed',
+depositConfirmedEmail: (username, amount, currency, transactionId) => `
+  Dear ${username},
+  
+  We are pleased to confirm that your deposit of **${amount} ${currency}** has been successfully completed and credited to your EkzaTrade account.
+
+  **Transaction Details:**
+  - Amount: **${amount} ${currency}**
+  - Status: **Confirmed**
+  - Transaction ID: [${transactionId}](https://blockstream.info/testnet/tx/${transactionId})
+
+  You can now use these funds for trading on our platform.
+
+  If you have any questions or concerns, please feel free to reach out to our support team.
+
+  Thank you for choosing EkzaTrade.
+
+  Warm regards,
+
+  The EkzaTrade Team
+  [ekzatrade@outlook.com]
+`,
+depositConfirmedSubject: 'Deposit Confirmed and Credited',
 };
 
 export default messages;
