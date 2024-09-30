@@ -9,12 +9,16 @@ import merchantRoutes from './routes/merchants.js';
 import transactionRoute from "./routes/transactionRoutes.js"
 import kycRoute from "./routes/kycRoutes.js"
 import crytpoData from "./routes/cryptoDataRoutes.js"
+import blockchain from "./routes/blockchain.js"
 import connectDB from './mongoDb.js';
 // import miningJob  from './shedule-job/sheduleJobs.js';
 import watchHiveBlocks from './shedule-job/watchHiveJobs.js';
 import cors from "cors"
 import { updateCryptos } from './utils/updateCryptos.js';
 import { initializeSocketIO } from './sockets/index.js';
+// import { initializeWebSocket } from './shedule-job/cryptoJobs.js';
+import { watchAllBtcDeposits, processPendingBtcTransactions } from './shedule-job/cryptoJobs.js';
+import { checkTransactionStatus,sendBitcoin, watchAllBitcoinDeposits, getBitcoinAddressTransactions, getTestnetBitcoinBalance, getBitcoinMainnetBalance } from './crypto/bitcoin/transactions.js';
 
 const app = express();
 const server = http.createServer(app);
@@ -41,10 +45,13 @@ app.use('/api/merchant', merchantRoutes);
 app.use("/api/transactions", transactionRoute);
 app.use("/api/kyc", kycRoute);
 app.use("/api/crypto-data", crytpoData);
+app.use("/api/blockchain", blockchain);
 
 // miningJob.start();
 watchHiveBlocks.start();
-updateCryptos.start()
+updateCryptos.start();
+watchAllBtcDeposits.start();
+processPendingBtcTransactions.start();
 
 initializeSocketIO(server)
 
