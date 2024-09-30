@@ -163,7 +163,7 @@ const messages = {
     [ekzatrade@outlook.com]
   `,
   failedLoginAttemptsSubject: 'Account Temporarily Suspended Due to Failed Login Attempts',
-  depositProcessingEmail: (username, amount, currency, transactionId) => `
+  cryptoDepositProcessingEmail: (username, amount, currency, transactionId) => `
   Dear ${username},
   
   We want to inform you that your deposit of **${amount} ${currency}** is currently being processed.
@@ -182,8 +182,8 @@ const messages = {
   The EkzaTrade Team
   [ekzatrade@outlook.com]
 `,
-depositProcessingSubject: 'Your Deposit is Being Processed',
-depositConfirmedEmail: (username, amount, currency, transactionId) => `
+cryptoDepositProcessingSubject: 'Your Deposit is Being Processed',
+cryptoDepositConfirmedEmail: (username, amount, currency, transactionId) => `
   Dear ${username},
   
   We are pleased to confirm that your deposit of **${amount} ${currency}** has been successfully completed and credited to your EkzaTrade account.
@@ -204,7 +204,7 @@ depositConfirmedEmail: (username, amount, currency, transactionId) => `
   The EkzaTrade Team
   [ekzatrade@outlook.com]
 `,
-depositConfirmedSubject: 'Deposit Confirmed and Credited',
+cryptoDepositConfirmedSubject: 'Deposit Confirmed and Credited',
 };
 
 export default messages;

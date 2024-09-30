@@ -1,16 +1,18 @@
 import nodemailer from 'nodemailer';
 
 export const transporter = nodemailer.createTransport({
-    service: 'Outlook365',
+    host: 'mail.privateemail.com',
+    port: 465,
+    secure: true, 
     auth: {
-      user: process.env.OUTLOOK_USER,
-      pass: process.env.OUTLOOK_PASS,
+      user: process.env.SUPPORT_EMAIL,
+      pass: process.env.EMAIL_PASS,
     },
   });
 
   export const requestWithdrawalTokenEmail = async (to, subject, text) => {
     const mailOptions = {
-      from: process.env.OUTLOOK_USER,
+      from: process.env.SUPPORT_EMAIL,
       to,
       subject,
       text
@@ -26,7 +28,7 @@ export const transporter = nodemailer.createTransport({
 
   export const transactionEmail = async (to, subject, text) => {
     const mailOptions = {
-      from: process.env.OUTLOOK_USER,
+      from: process.env.SUPPORT_EMAIL,
       to,
       subject,
       text
@@ -43,7 +45,7 @@ export const transporter = nodemailer.createTransport({
   ////this function alone shouls be enough 
   export const activitiesEmail = async (to, subject, text) => {
     const mailOptions = {
-      from: process.env.OUTLOOK_USER,
+      from: process.env.SUPPORT_EMAIL,
       to,
       subject,
       text

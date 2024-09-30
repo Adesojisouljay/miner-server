@@ -53,21 +53,6 @@ updateCryptos.start();
 watchAllBtcDeposits.start();
 processPendingBtcTransactions.start();
 
-
-/////testing function
-// checkTransactionStatus("70b31659f31e64c753643b38e4f327755cd02d8542d3401329ccc60ff4680821")
-// getBitcoinBalance("3HyALaqKpJPiQZcxPJm4GYXxKFkFSWGYHW")
-// getTestnetBitcoinBalance("mt3xPKyMBTt2Mj8tEtZjWpdb2uVZGdWdwo");
-// getBitcoinMainnetBalance("3HyALaqKpJPiQZcxPJm4GYXxKFkFSWGYHW");
-// watchAllBitcoinDeposits()
-// sendBitcoin(
-//   "n4SnstLYf7VjLUjpwLGi8af39Hzvu9zXK8", 
-// "f5f8f9f18b083f9671ccc2538ba14370b55fc30039ceefc485ff87296995a8bd", 
-// "mt3xPKyMBTt2Mj8tEtZjWpdb2uVZGdWdwo", 
-// 0.00002) 
-
-// getBitcoinAddressTransactions("mt3xPKyMBTt2Mj8tEtZjWpdb2uVZGdWdwo")
-
 initializeSocketIO(server)
 
 // Start server

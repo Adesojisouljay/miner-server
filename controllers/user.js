@@ -352,7 +352,7 @@ export const requestPasswordReset = async (req, res) => {
  
     const mailOptions = {
       to: user.email,
-      from: process.env.OUTLOOK_USER,
+      from: process.env.SUPPORT_EMAIL,
       subject: 'Password Reset',
       text: `Your password reset code is ${resetToken}. This code is valid for i5 minutes.\n\n
             You can reset your password by entering this code on the following page:\n\n${resetLink}\n\n

@@ -4,25 +4,15 @@ import User from "../../models/Users.js";
 import TransactionHistory from "../../models/transactionHistory.js";
 import messages from "../../variables/messages.js";
 import { activitiesEmail } from "../../utils/nodemailer.js";
-
-  // Helper function to validate a transaction ID
-  const isValidTxid = (input) => {
-    // Bitcoin transaction IDs are usually 64-character hex strings
-    return /^[a-fA-F0-9]{64}$/.test(input);
-  };
-  
-  // Helper function to validate a Bitcoin address
-  const isValidAddress = (input) => {
-    //validation for Bitcoin addresses (both testnet and mainnet)
-    return /^[13mn2][a-zA-Z0-9]{25,39}$/.test(input);
-  };
+import { decryptPrivateKey } from "../../utils/index.js";
+import { isValidAddress, isValidTxid } from "./helper.js";
 
   export const getTestnetBitcoinBalance = async (btcAddress) => {
     try {
       // Fetch the address details from Blockstream Testnet API
-      const response = await axios.get(`https://blockstream.info/mainnet/api/address/${btcAddress}`);
+      const response = await axios.get(`https://blockstream.info/testnet/api/address/${btcAddress}`);
       
-      // Extract funded and spent amounts (in satoshis) from the response
+      // Extract funded and spent amounts (in satoshis) from the response 
       const { funded_txo_sum, spent_txo_sum } = response.data.chain_stats;
   
       // Calculate the balance (in satoshis)
@@ -31,7 +21,6 @@ import { activitiesEmail } from "../../utils/nodemailer.js";
       // Convert balance from satoshis to Bitcoin (1 BTC = 100,000,000 satoshis)
       const btcBalanceInBTC = btcBalance / 100000000;
   
-      console.log("Testnet BTC Address:", btcAddress);
       console.log("Testnet BTC Balance (in BTC):", btcBalanceInBTC);
   
   
@@ -56,8 +45,7 @@ import { activitiesEmail } from "../../utils/nodemailer.js";
         // Convert balance from satoshis to Bitcoin (1 BTC = 100,000,000 satoshis)
         const btcBalanceInBTC = btcBalance / 100000000;
     
-        console.log("BTC Address:", btcAddress);
-        console.log("BTC Balance (in BTC):", btcBalanceInBTC);
+        // console.log("BTC Balance (in BTC):", btcBalanceInBTC);
     
         return btcBalanceInBTC;  // Return the balance in BTC
       } catch (error) {
@@ -81,7 +69,7 @@ export const checkTransactionStatus = async (input) => {
       } else if (isValidAddress(input)) {
         // Fetch address details
         response = await axios.get(`https://blockstream.info/testnet/api/address/${input}`);
-        console.log("Address Details:", response.data);
+        // console.log("Address Details:", response.data);
         return response.data;
       } else {
         throw new Error('Invalid input. Please provide a valid transaction ID or address.');
@@ -134,6 +122,7 @@ export const sendBitcoin = async (senderAddress, senderPrivateKey, receiverAddre
     // Calculate transaction size and fee
     const transactionSize = inputCount * 180 + outputCount * 34 + 10 - inputCount;
     fee = transactionSize * feeRate;
+
     if (totalAmountAvailable - satoshiToSend - fee < 0) {
       throw new Error("Balance is too low for this transaction");
     }
@@ -145,7 +134,8 @@ export const sendBitcoin = async (senderAddress, senderPrivateKey, receiverAddre
     transaction.fee(Math.round(fee));
 
     // Sign the transaction
-    transaction.sign(senderPrivateKey);
+    const decryptedPrivateKey = decryptPrivateKey(senderPrivateKey)
+    transaction.sign(decryptedPrivateKey);
 
     // Serialize and send the transaction
     const serializedTransaction = transaction.serialize();
@@ -167,7 +157,6 @@ export const sendBitcoin = async (senderAddress, senderPrivateKey, receiverAddre
 export const getBitcoinAddressTransactions = async (address) =>{
   try {
     const response = await axios.get(`https://blockstream.info/testnet/api/address/${address}/txs`);
-    console.log("..................getBitcoinAddressTransactions...........",response.data);
     return response.data;
   } catch (error) {
     console.error('Error fetching transactions:', error);
@@ -176,11 +165,8 @@ export const getBitcoinAddressTransactions = async (address) =>{
 }
 
 export async function watchAllBitcoinDeposits() {
-  console.log("user....watching")
-  // Fetch all users
   const users = await User.find({ 'assets.currency': 'bitcoin' }); 
 
-  // Loop through all user's Bitcoin addresses
   for (const user of users) {
     user.assets.forEach(asset => {
       if (asset.currency === 'bitcoin' && asset.depositAddress) {
@@ -191,7 +177,6 @@ export async function watchAllBitcoinDeposits() {
 }
 
 export async function watchBitcoinDeposits(address) {
-  console.log('Watching address:', address);
 
   const transactions = await getBitcoinAddressTransactions(address);
 
@@ -200,21 +185,20 @@ export async function watchBitcoinDeposits(address) {
       if (output.scriptpubkey_address === address) {
 
         //Satoshi to BTC
-        const amountInBTC = output.value / 100000000;
+        const amountInBTC = output.value / 100000000;  
 
         const user = await User.findOne({ 'assets.depositAddress': address });
 
-        if (user) {
-          console.log(`Found user: ${user.username}, cheching for existing transaction...`);
+        if(user.username === 'Ekzahot') {
+          return;
+        }
 
-          //if the transaction already exists
+        if (user) {
           const existingTransaction = await TransactionHistory.findOne({ trxId: tx.txid });
           if (existingTransaction) {
             console.log('Transaction already recorded, skipping...');
             return;
           }
-
-          console.log("..........tx.........", tx)
 
           const newTransaction = new TransactionHistory({
             userId: user._id,
@@ -228,12 +212,12 @@ export async function watchBitcoinDeposits(address) {
           });
 
           await newTransaction.save();
-          console.log('New transaction detected and recorded as pending successfully:', newTransaction); 
 
-       /////email sending logic here
+       const emailContent = messages.cryptoDepositProcessingEmail(user.username, amountInBTC, currency, tx.txid);
+       activitiesEmail(user.email, messages.cryptoDepositProcessingSubject, emailContent);
 
         } else {
-          console.log('No user found for address:', address);
+          // console.log('No user found for address:', address);
         }
       }
     });
@@ -241,16 +225,13 @@ export async function watchBitcoinDeposits(address) {
 }
 export const processPendingTransactions = async () => {
   try {
-    console.log("object")
     const pendingTransactions = await TransactionHistory.find({ status: 'pending', type: 'Crypto deposit' });
     for (const tx of pendingTransactions) {
-      console.log(tx)
-      console.log(tx.amount)
+
       const { confirmed, transactionDetails } = await checkTransactionStatus(tx.trxId);
 
       if (confirmed) {
         const user = await User.findById(tx.userId);
-        console.log(user)
 
         if (user) {
           const asset = user.assets.find(asset => asset.currency === 'bitcoin');
@@ -270,9 +251,10 @@ export const processPendingTransactions = async () => {
 
             await tx.save();
 
-              ////email sending should be here
+              const emailContent = messages.cryptoDepositConfirmedEmail(user.username, tx.amount, asset.currency, tx.trxId);
+              activitiesEmail(user.email, messages.cryptoDepositConfirmedSubject, emailContent);
 
-            console.log(`Transaction ${tx.trxId} confirmed. User ${user.username}'s BTC balance updated.`);
+            // console.log(`Transaction ${tx.trxId} confirmed. User ${user.username}'s BTC balance updated.`);
           } else {
             console.error(`User ${user.username} does not have a BTC deposit address. Skipping transaction ${tx.trxId}.`);
           }
