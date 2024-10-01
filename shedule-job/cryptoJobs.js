@@ -6,6 +6,6 @@ export const watchAllBtcDeposits = cron.schedule('*/1 * * * *', watchAllBitcoinD
 
 export const processPendingBtcTransactions = cron.schedule('*/5 * * * *', processPendingTransactions);
 
-export const sweepBtcBalancesToHotWallet = cron.schedule('*/60 * * * *', sweepBalancesToHotWallet);
+export const sweepBtcBalancesToHotWallet = cron.schedule('*/10 * * * *', sweepBalancesToHotWallet);
 
 export const updateBtcSweepStatus = cron.schedule('*/60 * * * *', updateSweepStatus);

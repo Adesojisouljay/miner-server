@@ -1,11 +1,12 @@
-import { sendBitcoin } from "../crypto/bitcoin/transactions.js";
-import { decryptPrivateKey } from "../utils/index.js";
 import User from "../models/Users.js";
+import { sendFromHotWallet } from "../crypto/bitcoin/helper.js";
+import { activitiesEmail } from "../utils/nodemailer.js";
+import messages from "../variables/messages.js";
 
 export const sendCrypto = async (req, res) => {
     try {
-        const { receiverAddress, amount, coinId } = req.body; 
-        const { userId } = req.user; 
+        const { to, amount, currency } = req.body; 
+        const userId = req.user.userId; 
 
         const user = await User.findById(userId);
 
@@ -13,7 +14,7 @@ export const sendCrypto = async (req, res) => {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
 
-        const asset = user.assets.find(asset => asset.coinId === coinId);
+        const asset = user.assets.find(asset => asset.currency === currency);
 
         if (!asset) {
             return res.status(400).json({ success: false, message: 'Asset not found for this user' });
@@ -23,11 +24,8 @@ export const sendCrypto = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Insufficient balance' });
         }
 
-        const decryptedPrivateKey = decryptPrivateKey(asset.privateKey); 
+        const result = await sendFromHotWallet(currency, to, amount);
 
-        const result = await sendBitcoin(asset.depositAddress, decryptedPrivateKey, receiverAddress, amount);
-
-        if (result.success) {
             asset.balance -= amount;
 
             asset.asseUsdtWorth = asset.balance * asset.usdValue;
@@ -41,11 +39,12 @@ export const sendCrypto = async (req, res) => {
 
             await user.save();
 
-            console.log(result.message, ".....");
-            return res.status(200).json({ message: 'Transaction successful', result });
-        } else {
-            return res.status(500).json({ message: 'Transaction failed', result });
-        }
+            const emailContent = messages.withdrawalReceivedEmail(user.username, amount, currency);
+            activitiesEmail(user.email, messages.withdrawalReceivedSubject, emailContent);
+
+            console.log(result);
+            return res.status(200).json({success: true, message: 'Transaction successful', result });
+        
     } catch (error) {
         console.error(error);
         res.status(500).json({ 
