@@ -81,6 +81,7 @@ export const register = async (req, res) => {
       nairaBalance: 0,
       totalUsdValue: 0,
       totalNairaValue: 0,
+      userMemo: memo
     });
 
     await newUser.save();
@@ -401,6 +402,7 @@ export const addUserAsset = async (req, res) => {
   try {
     const { coinId } = req.body;
     const userId = req.user.userId;
+    console.log(coinId)
     
     const user = await User.findById(userId);
 
@@ -425,19 +427,39 @@ export const addUserAsset = async (req, res) => {
     const cryptoInfoNGN = ngnData?.find(crypto => crypto.id === coinId);
 
      ////Logic for creating account should be here later
-    const address = "Tgrj8yiuyighhh0u09889uoihnkhh"
-    const privKey ="testPrivekey"
-    const encryptedPrivateKey = encryptPrivateKey(privKey)
+     let address;
+     let privateKey;
+     let encryptedPrivateKey;
 
-    const depositAddress = ['hive', 'hbd'].includes(coinId.toLowerCase()) 
-      ? process.env.HIVE_ACC 
-      : address;
+     ///we will use this for addresses that requires mamo
+    let memo = await generateUserMemo();
+
+     if(coinId === "bitcoin") {
+      const bitcoinWallet = createBtcWallet();
+  
+       address = bitcoinWallet.address;
+       privateKey = bitcoinWallet.privateKey;
+       encryptedPrivateKey = encryptPrivateKey(privateKey);
+       memo = ""
+    } else if (coinId === "hive" || coinId === "hive_dollar") {
+        address = "";
+        privateKey = "";
+        encryptedPrivateKey = "";
+        memo = memo
+
+    } else {
+      //////but we needd to check for some edge cases where other coin requires memo
+        address = "";
+       privateKey = "";
+       encryptedPrivateKey = "";
+       memo = ""
+    }
 
     const newAsset = {
       currency: coinId,
       balance: 0,
-      depositAddress: "",
-      memo: "",
+      depositAddress: address,
+      memo: memo ? memo : "", ///////we will add memo for coin that requires memo
       usdValue: cryptoInfoUSD ? cryptoInfoUSD.current_price : 0,
       nairaValue: cryptoInfoNGN ? cryptoInfoNGN.current_price : 0,
       asseUsdtWorth: 0,
@@ -448,7 +470,7 @@ export const addUserAsset = async (req, res) => {
       priceChangeNgn: cryptoInfoNGN ? cryptoInfoNGN.price_change_24h : 0,
       percentageChange: cryptoInfoUSD ? cryptoInfoUSD.price_change_percentage_24h : 0,
       image: cryptoInfoUSD ? cryptoInfoUSD.image : null,
-      privateKey: "",
+      privateKey: encryptedPrivateKey,
     };
 
     user.assets.push(newAsset);
@@ -468,15 +490,15 @@ export const removeUserAsset = async (req, res) => {
 
     const user = await User.findById(userId);
 
-    if (!coinId) {
-      return res.status(400).json({ success: false, message: 'Please provide coinId' });
-    }
+    // if (!coinId) {
+    //   return res.status(400).json({ success: false, message: 'Please provide coinId' });
+    // }
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    const assetIndex = user.assets.findIndex(asset => asset.coinId === coinId);
+    const assetIndex = user.assets.findIndex(asset => asset.coinId === null);
 
     if (assetIndex === -1) {
       return res.status(404).json({ success: false, message: 'Asset not found' });
