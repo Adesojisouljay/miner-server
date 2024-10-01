@@ -63,7 +63,7 @@ export const checkTransactionStatus = async (input) => {
         response = await axios.get(`https://blockstream.info/testnet/api/tx/${input}`);
         
        const confirmed = response.data.status.confirmed;
-        console.log("Transaction status:", { confirmed});
+        // console.log("Transaction status:", { input, confirmed});
         return { confirmed, transactionDetails: response.data };
 
       } else if (isValidAddress(input)) {
@@ -134,7 +134,7 @@ export const sendBitcoin = async (senderAddress, senderPrivateKey, receiverAddre
     transaction.fee(Math.round(fee));
 
     // Sign the transaction
-    const decryptedPrivateKey = decryptPrivateKey(senderPrivateKey)
+    const decryptedPrivateKey = decryptPrivateKey(senderPrivateKey);
     transaction.sign(decryptedPrivateKey);
 
     // Serialize and send the transaction
@@ -177,28 +177,28 @@ export async function watchAllBitcoinDeposits() {
 }
 
 export async function watchBitcoinDeposits(address) {
+  try {
+    const transactions = await getBitcoinAddressTransactions(address);
 
-  const transactions = await getBitcoinAddressTransactions(address);
+    for (const tx of transactions) {
+      for (const output of tx.vout) {
+        if (output.scriptpubkey_address === address) {
+          // Satoshi to BTC
+          const amountInBTC = output.value / 100000000;  
 
-  transactions.forEach(async (tx) => {
-    tx.vout.forEach(async (output) => {
-      if (output.scriptpubkey_address === address) {
+          const user = await User.findOne({ 'assets.depositAddress': address });
+          
+          if (!user || user.username === 'Ekzahot') {
+            console.log('User not found or is excluded:', user ? user.username : 'No user');
+            continue;
+          }
 
-        //Satoshi to BTC
-        const amountInBTC = output.value / 100000000;  
-
-        const user = await User.findOne({ 'assets.depositAddress': address });
-
-        if(user.username === 'Ekzahot') {
-          return;
-        }
-
-        if (user) {
           const existingTransaction = await TransactionHistory.findOne({ trxId: tx.txid });
           if (existingTransaction) {
-            console.log('Transaction already recorded, skipping...');
-            return;
+            console.log('Transaction already recorded, skipping...', tx.txid);
+            continue;
           }
+
 
           const newTransaction = new TransactionHistory({
             userId: user._id,
@@ -213,16 +213,16 @@ export async function watchBitcoinDeposits(address) {
 
           await newTransaction.save();
 
-       const emailContent = messages.cryptoDepositProcessingEmail(user.username, amountInBTC, currency, tx.txid);
-       activitiesEmail(user.email, messages.cryptoDepositProcessingSubject, emailContent);
-
-        } else {
-          // console.log('No user found for address:', address);
+          const emailContent = messages.cryptoDepositProcessingEmail(user.username, amountInBTC, "bitcoin", tx.txid);
+          await activitiesEmail(user.email, messages.cryptoDepositProcessingSubject, emailContent);
         }
       }
-    });
-  });
+    }
+  } catch (error) {
+    console.error("Error watching for deposits:", error);
+  }
 }
+
 export const processPendingTransactions = async () => {
   try {
     const pendingTransactions = await TransactionHistory.find({ status: 'pending', type: 'Crypto deposit' });
@@ -254,7 +254,7 @@ export const processPendingTransactions = async () => {
               const emailContent = messages.cryptoDepositConfirmedEmail(user.username, tx.amount, asset.currency, tx.trxId);
               activitiesEmail(user.email, messages.cryptoDepositConfirmedSubject, emailContent);
 
-            // console.log(`Transaction ${tx.trxId} confirmed. User ${user.username}'s BTC balance updated.`);
+            console.log(`Transaction ${tx.trxId} confirmed. User ${user.username}'s BTC balance updated.`);
           } else {
             console.error(`User ${user.username} does not have a BTC deposit address. Skipping transaction ${tx.trxId}.`);
           }

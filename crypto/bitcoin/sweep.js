@@ -32,34 +32,39 @@ export const sweepBalancesToHotWallet = async () => {
         if (btcAsset && btcAsset.balance > 0.0001) {
 
           const sweepableAmount = await calculateSweepableAmount(btcAsset.depositAddress)
+          console.log(sweepableAmount, "sweep........able")
 
-          const amountToSweep = sweepableAmount;
+          if (sweepableAmount && sweepableAmount > 0) {
+            try {
+              const sweepTx = await sendBitcoin(btcAsset.depositAddress, btcAsset.privateKey, hotWalletAddress, sweepableAmount);
+    
+              btcAsset.balance = parseFloat((btcAsset.balance - sweepableAmount).toFixed(8));
+    
+              btcAsset.asseUsdtWorth = btcAsset.balance * btcAsset.usdValue;
+              btcAsset.assetNairaWorth = btcAsset.balance * btcAsset.nairaValue;
+    
+              user.totalUsdValue = user.assets.reduce((total, asset) => total + (asset.asseUsdtWorth || 0), 0);
+              user.totalNairaValue = user.assets.reduce((total, asset) => total + (asset.assetNairaWorth || 0), 0);
+    
+              await user.save();
   
-          try {
-            const sweepTx = await sendBitcoin(btcAsset.depositAddress, btcAsset.privateKey, hotWalletAddress, amountToSweep);
+            await SweptTransaction.create({
+              userId: user._id,
+              amountSwept: sweepableAmount,
+              txId: sweepTx,
+              timestamp: new Date(),
+            });
+    
+              console.log(`User ${user.username}'s balance of ${sweepableAmount} BTC swept to hot wallet. Transaction: ${sweepTx}`);
   
-            btcAsset.balance = parseFloat((btcAsset.balance - amountToSweep).toFixed(8));
+            } catch (error) {
+              console.error(`Failed to send Bitcoin for user ${user.username}:`, error);
+            }
+            } else {
+                console.log(`Invalid sweepable amount (${sweepableAmount}) for user ${user.username}.`);
+                continue;
+            }        
   
-            btcAsset.asseUsdtWorth = btcAsset.balance * btcAsset.usdValue;
-            btcAsset.assetNairaWorth = btcAsset.balance * btcAsset.nairaValue;
-  
-            user.totalUsdValue = user.assets.reduce((total, asset) => total + (asset.asseUsdtWorth || 0), 0);
-            user.totalNairaValue = user.assets.reduce((total, asset) => total + (asset.assetNairaWorth || 0), 0);
-  
-            await user.save();
-
-          await SweptTransaction.create({
-            userId: user._id,
-            amountSwept: amountToSweep,
-            txId: sweepTx,
-            timestamp: new Date(),
-          });
-  
-            console.log(`User ${user.username}'s balance of ${amountToSweep} BTC swept to hot wallet. Transaction: ${sweepTx}`);
-
-          } catch (error) {
-            console.error(`Failed to send Bitcoin for user ${user.username}:`, error);
-          }
         } else {
           console.log(`User ${user.username} does not have a sufficient Bitcoin balance to sweep.`);
         }

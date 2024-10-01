@@ -7,7 +7,7 @@ const transactionHistorySchema = new mongoose.Schema({
   receiver: { type: String },
   memo: { type: String, required: false },
   trxId: { type: String, required: true, unique: true },
-  blockNumber: { type: String, unique: true },
+  blockNumber: { type: String, unique: false },
   fromAmount: { type: Number },
   fromCurrency: { type: String },
   toAmount: { type: Number },
