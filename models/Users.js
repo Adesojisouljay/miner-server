@@ -39,6 +39,7 @@ const userSchema = new mongoose.Schema({
   role: { type: String, enum: ['user', 'admin', 'merchant', 'support-agent'], default: 'user' },
   accounts: [accountSchema],
   profileImage: { type: String },
+  userMemo: { type: String },
   resetPasswordToken: { type: String }, 
   resetPasswordExpires: { type: Date },
   token: { type: String },
