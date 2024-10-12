@@ -98,7 +98,7 @@ export const calculateTransactionFee = async (inputCount = 1, outputCount = 2) =
   }
 };
 
-export const sendFromHotWallet = async (coinId, receiverAddress, amount) => {
+export const sendBtcFromHotWallet = async (coinId, receiverAddress, amount) => {
   try {
       const hot = await User.findOne({ username: "Ekzahot" });
       if (!hot) {

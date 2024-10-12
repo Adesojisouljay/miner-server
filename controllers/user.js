@@ -2,10 +2,13 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/Users.js';
 import { fetchCryptoData } from '../utils/cryptoUtils.js';
+import CryptoData from '../models/CryptoData.js';
 import { generateUserMemo, validatePassword } from '../utils/index.js';
 import { transporter } from '../utils/nodemailer.js';
 import { encryptPrivateKey } from '../utils/index.js';
 import { createBtcWallet } from '../crypto/bitcoin/wallet.js';
+import { createTronWallet } from '../crypto/tron/index.js';
+import { trc20Tokens } from '../variables/trc20Tokens.js';
 
 const resetLink = `${process.env.FRONTEND_URL}/reset-password`;
 
@@ -418,13 +421,15 @@ export const addUserAsset = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Asset already exists' });
     }
 
-    const response = await fetchCryptoData();
-    // const { usdData, ngnData } = response;
-     const usdData = response?.usdData;
-    const ngnData = response?.ngnData;
+      const response = await CryptoData.findOne()
 
-    const cryptoInfoUSD = usdData?.find(crypto => crypto.id === coinId);
-    const cryptoInfoNGN = ngnData?.find(crypto => crypto.id === coinId);
+     const usdData = response?.usdData;
+      const ngnData = response?.ngnData;
+
+      const cryptoInfoUSD = usdData?.find(crypto => crypto.id === coinId);
+      const cryptoInfoNGN = ngnData?.find(crypto => crypto.id === coinId);
+
+      const existingTrc20Asset = user.assets.find(asset => trc20Tokens.includes(asset.coinId));
 
      ////Logic for creating account should be here later
      let address;
@@ -447,12 +452,25 @@ export const addUserAsset = async (req, res) => {
         encryptedPrivateKey = "";
         memo = memo
 
+    } else if (trc20Tokens.includes(coinId)) {
+      if (existingTrc20Asset) {
+        address = existingTrc20Asset.depositAddress;
+        privateKey = existingTrc20Asset.privateKey;
+        encryptedPrivateKey = existingTrc20Asset.privateKey;
+        memo = "";
+      } else {
+        const trxWallet = await createTronWallet();
+        address = trxWallet.address;
+        privateKey = trxWallet.privateKey;
+        encryptedPrivateKey = encryptPrivateKey(privateKey);
+        memo = "";
+      }
     } else {
       //////but we needd to check for some edge cases where other coin requires memo
         address = "";
-       privateKey = "";
-       encryptedPrivateKey = "";
-       memo = ""
+        privateKey = "";
+        encryptedPrivateKey = "";
+        memo = ""
     }
 
     const newAsset = {
@@ -487,18 +505,19 @@ export const removeUserAsset = async (req, res) => {
   try {
     const { coinId } = req.body;
     const userId = req.user.userId;
+    console.log("object....", coinId)
 
     const user = await User.findById(userId);
 
-    // if (!coinId) {
-    //   return res.status(400).json({ success: false, message: 'Please provide coinId' });
-    // }
+    if (!coinId) {
+      return res.status(400).json({ success: false, message: 'Please provide coinId' });
+    }
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    const assetIndex = user.assets.findIndex(asset => asset.coinId === null);
+    const assetIndex = user.assets.findIndex(asset => asset.coinId === coinId);
 
     if (assetIndex === -1) {
       return res.status(404).json({ success: false, message: 'Asset not found' });

@@ -28,6 +28,10 @@ export const coinIdsArray = [
     'hive',          // HIVE
     'hive_dollar',   // HBD
     'steem',         // STEEM
-    'steem-dollars'  // SBD
+    'steem-dollars',  // SBD
+    'wink',           ///WinkLink
+    'sundog',         /////sundog
+    'bittorrent',       ////bittorrent
+    'just',           /////Just
   ];
   
