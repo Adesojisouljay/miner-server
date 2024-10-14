@@ -5,6 +5,11 @@ import { sendTrxFromHotWallet } from "../crypto/tron/helper.js";
 import { trc20Tokens } from "../variables/trc20Tokens.js";
 import { activitiesEmail } from "../utils/nodemailer.js";
 import messages from "../variables/messages.js";
+import { getTransactionFee } from "../crypto/tron/index.js";
+import { calculateTransactionFee } from "../crypto/bitcoin/helper.js";
+
+const baseTrxFee = 1;
+const trxCongestionFee = 0.5;
 
 export const sendCrypto = async (req, res) => {
     try {
@@ -101,3 +106,46 @@ export const sendCrypto = async (req, res) => {
         });
     }
 };
+
+export const getFees = async (req, res) => {
+    const { coinId, fromAddress, toAddress } = req.params;
+
+    try {
+        let feeResponse;
+
+        // Check which coinId is being requested and call the appropriate fee calculation
+        if (coinId === "tether") {
+            console.log(fromAddress, toAddress, "....addres.l...")
+            const response = await getTransactionFee(fromAddress, toAddress);
+            console.log("TRC20 Fee Response:", response);
+
+            const energyFee = parseFloat(response.energyFee);
+            let totalFee;
+
+            if (energyFee < baseTrxFee) {
+                totalFee = baseTrxFee;
+            } else {
+                totalFee = baseTrxFee + trxCongestionFee;
+            }
+
+            feeResponse = totalFee.toFixed(3);
+            console.log(feeResponse, "...fee")
+        } else if (coinId === "bitcoin") {
+            const response = await calculateTransactionFee();
+            console.log("Bitcoin Fee Response:", response);
+
+            feeResponse = response.feeInBTC;
+        } else {
+            feeResponse = 0.000
+        }
+
+        res.json({
+            success: true,
+            fee: feeResponse,
+        });
+    } catch (error) {
+        console.error('Error getting transaction fees:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+};  
+ 

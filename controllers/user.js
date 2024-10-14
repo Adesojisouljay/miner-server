@@ -9,6 +9,7 @@ import { encryptPrivateKey } from '../utils/index.js';
 import { createBtcWallet } from '../crypto/bitcoin/wallet.js';
 import { createTronWallet } from '../crypto/tron/index.js';
 import { trc20Tokens } from '../variables/trc20Tokens.js';
+import { sendTrxFromHotWallet } from '../crypto/tron/helper.js';
 
 const resetLink = `${process.env.FRONTEND_URL}/reset-password`;
 
@@ -464,6 +465,9 @@ export const addUserAsset = async (req, res) => {
         privateKey = trxWallet.privateKey;
         encryptedPrivateKey = encryptPrivateKey(privateKey);
         memo = "";
+
+        ////might need to handle this properly, but we need to activate trx address for users, lets keep this for testing sake
+        sendTrxFromHotWallet("tron", address, 0.1)
       }
     } else {
       //////but we needd to check for some edge cases where other coin requires memo

@@ -146,20 +146,6 @@ export async function watchAllTronDeposits() {
         }); 
     }
 }
-   
-// Set an interval to call watchAllTronDeposits every 5 seconds
-const testF = () => {
-    setInterval(() => {
-      watchAllTrxDeposits();
-    }, 50000);
-};
-const testF2 = () => {
-    setInterval(() => {
-      watchAllTronDeposits(); 
-    }, 5000);
-};
-// testF()
-// testF2(); 
 
 //////handke confirm transaction here
 export const processPendingTrxTransactions = async () => {
@@ -256,11 +242,3 @@ export const processPendingTrxTransactions = async () => {
       throw error;
     }
   };
-
-  const testF3 = () => {
-    setInterval(() => {
-        processPendingTrxTransactions();
-    }, 10000);
-};
-
-// testF3()

@@ -1,7 +1,8 @@
 import axios from "axios";
 import { decryptPrivateKey } from "../../utils/index.js";
 
-const trxUrl = "http://localhost:1101/api/trx/"
+// const trxUrl = "http://localhost:1101/api/trx/"
+const trxUrl = "https://v2api.ezabay.com/api/trx/"
 
 const usdtContractAdd = "41eca9bc828a3005b9a3b909f2cc5c2a54794de05f"
 

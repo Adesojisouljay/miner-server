@@ -1,7 +1,7 @@
 export const trc20Tokens = [
-    "tron", 
+    // "tron", 
     "tether", 
-    "wink", 
-    "bittorrent", 
-    "just"
+    // "wink", 
+    // "bittorrent", 
+    // "just"
 ];

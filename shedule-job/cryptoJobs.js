@@ -16,7 +16,7 @@ export const updateBtcSweepStatus = cron.schedule('*/60 * * * *', updateSweepSta
 ///////////TRX watched
 export const processTrxTransactions = cron.schedule('*/5 * * * *', processPendingTrxTransactions);
 export const watchTrxDeposits = cron.schedule('*/5 * * * *', watchAllTrxDeposits);
-export const watchTronDeposits = cron.schedule('*/1 * * * *', watchAllTronDeposits);
+// export const watchTronDeposits = cron.schedule('*/1 * * * *', watchAllTronDeposits);
 
 // will take a look later
 // export const sweepTrxBalances = cron.schedule('*/5 * * * *', sweepTrxBalancesToHotWallet); 
