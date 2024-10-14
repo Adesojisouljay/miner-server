@@ -179,26 +179,26 @@ export async function watchAllBitcoinDeposits() {
 export async function watchBitcoinDeposits(address) {
   try {
     const transactions = await getBitcoinAddressTransactions(address);
-
+    
     for (const tx of transactions) {
       for (const output of tx.vout) {
         if (output.scriptpubkey_address === address) {
           // Satoshi to BTC
           const amountInBTC = output.value / 100000000;  
-
+          
           const user = await User.findOne({ 'assets.depositAddress': address });
           
           if (!user || user.username === 'Ekzahot') {
             console.log('User not found or is excluded:', user ? user.username : 'No user');
             continue;
           }
-
+          
+          //we need to check sceniaro where a user on our exchange sends to another user on our exchnage, in that we should avoid duplication
           const existingTransaction = await TransactionHistory.findOne({ trxId: tx.txid });
           if (existingTransaction) {
             console.log('Transaction already recorded, skipping...', tx.txid);
             continue;
           }
-
 
           const newTransaction = new TransactionHistory({
             userId: user._id,
@@ -228,38 +228,43 @@ export const processPendingTransactions = async () => {
     const pendingTransactions = await TransactionHistory.find({ status: 'pending', type: 'Crypto deposit' });
     for (const tx of pendingTransactions) {
 
-      const { confirmed, transactionDetails } = await checkTransactionStatus(tx.trxId);
+      if(tx.currency === "bitcoin") {
 
-      if (confirmed) {
-        const user = await User.findById(tx.userId);
-
-        if (user) {
-          const asset = user.assets.find(asset => asset.currency === 'bitcoin');
-
-          if (asset && asset.depositAddress) {
-            asset.balance += Number(tx.amount);
-
-            asset.asseUsdtWorth = asset.balance * asset.usdValue;
-            asset.assetNairaWorth = asset.balance * asset.nairaValue;
-        
-            user.totalUsdValue = user.assets.reduce((total, asset) => total + (asset.asseUsdtWorth || 0), 0);
-            user.totalNairaValue = user.assets.reduce((total, asset) => total + (asset.assetNairaWorth || 0), 0);
-            await user.save();
-
-            tx.status = 'confirmed';
-            tx.blockNumber = transactionDetails.status.block_height;
-
-            await tx.save();
-
-              const emailContent = messages.cryptoDepositConfirmedEmail(user.username, tx.amount, asset.currency, tx.trxId);
-              activitiesEmail(user.email, messages.cryptoDepositConfirmedSubject, emailContent);
-
-            console.log(`Transaction ${tx.trxId} confirmed. User ${user.username}'s BTC balance updated.`);
-          } else {
-            console.error(`User ${user.username} does not have a BTC deposit address. Skipping transaction ${tx.trxId}.`);
+        const { confirmed, transactionDetails } = await checkTransactionStatus(tx.trxId);
+  
+        if (confirmed) {
+          const user = await User.findById(tx.userId);
+  
+          if (user) {
+            const asset = user.assets.find(asset => asset.currency === 'bitcoin');
+  
+            if (asset && asset.depositAddress) {
+              asset.balance += Number(tx.amount);
+  
+              asset.asseUsdtWorth = asset.balance * asset.usdValue;
+              asset.assetNairaWorth = asset.balance * asset.nairaValue;
+          
+              user.totalUsdValue = user.assets.reduce((total, asset) => total + (asset.asseUsdtWorth || 0), 0);
+              user.totalNairaValue = user.assets.reduce((total, asset) => total + (asset.assetNairaWorth || 0), 0);
+              await user.save();
+  
+              tx.status = 'confirmed';
+              tx.blockNumber = transactionDetails.status.block_height;
+  
+              await tx.save();
+  
+                const emailContent = messages.cryptoDepositConfirmedEmail(user.username, tx.amount, asset.currency, tx.trxId);
+                activitiesEmail(user.email, messages.cryptoDepositConfirmedSubject, emailContent);
+  
+              console.log(`Transaction ${tx.trxId} confirmed. User ${user.username}'s BTC balance updated.`);
+            } else {
+              console.error(`User ${user.username} does not have a BTC deposit address. Skipping transaction ${tx.trxId}.`);
+            }
           }
         }
+        
       }
+
     }
   } catch (error) {
     console.error("Error processing pending transactions:", error);
