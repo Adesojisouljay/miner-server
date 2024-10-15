@@ -10,12 +10,15 @@ import { createBtcWallet } from '../crypto/bitcoin/wallet.js';
 import { createTronWallet } from '../crypto/tron/index.js';
 import { trc20Tokens } from '../variables/trc20Tokens.js';
 import { sendTrxFromHotWallet } from '../crypto/tron/helper.js';
+import messages from '../variables/messages.js';
+import { activitiesEmail } from '../utils/nodemailer.js';
 
 const resetLink = `${process.env.FRONTEND_URL}/reset-password`;
 
 export const register = async (req, res) => {
   try {
     const { email, password, username, firstName, lastName, otherName } = req.body;
+    console.log(email)
 
     const memo = await generateUserMemo();
 
@@ -113,6 +116,9 @@ export const register = async (req, res) => {
     });
 
     await newUser.save();
+
+    const emailContent = messages.welcomeEmail(newUser.username);
+    activitiesEmail(newUser.email, messages.welcomeSubject, emailContent);
 
     res.status(201).json({ success: true, message: 'User registered successfully' });
   } catch (error) {

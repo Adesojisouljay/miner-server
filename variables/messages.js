@@ -1,5 +1,24 @@
 const messages = {
-    // Withdrawal Emails
+    welcomeEmail: (username) => `
+    Dear ${username},
+
+    Welcome to Ekzatrade, your new home for secure and seamless crypto trading! We're excited to have you join our growing community of traders.
+
+    At ezabay.com, you’ll find a range of features designed to make your trading experience smooth and rewarding:
+    - **Wide Selection of Cryptocurrencies**: Trade a variety of popular digital assets with ease.
+    - **Secure Platform**: We prioritize your security with advanced measures to protect your assets.
+    - **24/7 Support**: Our dedicated support team is here to assist you anytime.
+
+    To get started, log in to your account and explore the platform. If you need any help, don't hesitate to reach out to our support team.
+
+    Thank you for choosing ezabay.com. We look forward to supporting your trading journey.
+
+    Warm regards,
+
+    The ezabay Team
+    [support@ezabay.com]
+  `,
+  welcomeSubject: 'Welcome to ezabay.com - Your Crypto Trading Hub',
     sendWithdrawalToken: (username, withdrawalToken) => `
       Dear ${username},
     
