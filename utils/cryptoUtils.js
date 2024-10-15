@@ -75,5 +75,5 @@ export const fetchCryptoNews = async () => {
   }
 };
 
-cron.schedule('*/30 * * * *', fetchCryptoNews);
+// cron.schedule('*/30 * * * *', fetchCryptoNews);
 cron.schedule('*/5 * * * *', fetchCryptoData);
