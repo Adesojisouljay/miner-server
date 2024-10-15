@@ -18,7 +18,7 @@ const messages = {
     The ezabay Team
     [support@ezabay.com]
   `,
-  welcomeSubject: 'Welcome to ezabay.com - Your Crypto Trading Hub',
+  welcomeSubject: 'Welcome to Ekzatrade - Your Crypto Trading Hub',
     sendWithdrawalToken: (username, withdrawalToken) => `
       Dear ${username},
     
