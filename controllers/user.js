@@ -12,6 +12,7 @@ import { trc20Tokens } from '../variables/trc20Tokens.js';
 import { sendTrxFromHotWallet } from '../crypto/tron/helper.js';
 import messages from '../variables/messages.js';
 import { activitiesEmail } from '../utils/nodemailer.js';
+import UAParser from "ua-parser-js"
 
 const resetLink = `${process.env.FRONTEND_URL}/reset-password`;
 
@@ -168,11 +169,25 @@ export const login = async (req, res) => {
       kyc: user.kyc || {}
     };
 
-    const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    const cleanedIpAddress = ipAddress.includes('::ffff:') ? ipAddress.split('::ffff:')[1] : ipAddress;
-    const userAgent = req.headers['user-agent']; 
+    const ipAddress = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+    const cleanedIpAddress = (ipAddress.includes('::ffff:') || ipAddress.includes('::')) 
+        ? (ipAddress.split('::ffff:')[1] || ipAddress.split('::')[1]) 
+        : ipAddress;
 
-    const emailContent = messages.loginDetectedEmail(user.username, cleanedIpAddress, userAgent);
+    const userAgent = req.headers['user-agent'];
+
+    const parser = new UAParser();
+    const parsedUserAgent = parser.setUA(userAgent).getResult();
+    const deviceType = parsedUserAgent.device.vendor || 'Unknown Device';
+    const deviceModel = parsedUserAgent.device.model || 'Unknown Model';
+    const osName = parsedUserAgent.os.name || 'Unknown OS';
+    const browserName = parsedUserAgent.browser.name || 'Unknown Browser';
+
+    const emailContent = messages.loginDetectedEmail(
+      user.username, 
+      cleanedIpAddress, 
+      `${deviceType} ${deviceModel} running ${osName} on ${browserName}`
+    );
     activitiesEmail(user.email, messages.loginDetectedSubject, emailContent);
 
     res.status(200).json({ success: true, token, user: userWithoutPassword });

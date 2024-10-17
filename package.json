@@ -24,6 +24,7 @@
     "node-cron": "^3.0.3",
     "nodemailer": "^6.9.14",
     "socket.io": "^4.7.5",
+    "ua-parser-js": "^1.0.39",
     "ws": "^8.18.0"
   }
 }
