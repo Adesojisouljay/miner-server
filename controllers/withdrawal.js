@@ -58,6 +58,10 @@ export const processHiveWithdrawal = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid or expired withdrawal token' });
     }
 
+    if (!user.kyc || user.kyc.kycStatus !== "Verified") {
+      return res.status(400).json({ success: false, message: `Sorry, you haven't completed KYC`});
+    }
+
     const asset = user.assets.find(asset => asset.currency.toLowerCase() === currency.toLowerCase());
 
     if (!asset) {
@@ -138,6 +142,10 @@ export const requestFiatWithdrawal = async (req, res) => {
 
     if (user.token !== withdrawalToken || Date.now() > user.tokenExpires) {
       return res.status(400).json({ success: false, message: 'Invalid or expired withdrawal token' });
+    }
+
+    if (!user.kyc || user.kyc.kycStatus !== "Verified") {
+      return res.status(400).json({ success: false, message: `Sorry, you haven't completed KYC`});
     }
 
     if (user.nairaBalance < amount) {

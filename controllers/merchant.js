@@ -11,6 +11,10 @@ export const createMerchant = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
+    if (!user.kyc || user.kyc.kycStatus !== "Verified") {
+      return res.status(400).json({ success: false, message: `Sorry, you haven't completed KYC`});
+    }
+
     const existingMerchant = await Merchant.findOne({ userId });
     if (existingMerchant) {
       return res.status(409).json({ success: false, message: 'Merchant account already exists for this user' });

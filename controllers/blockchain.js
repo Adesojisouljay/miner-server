@@ -23,6 +23,10 @@ export const sendCrypto = async (req, res) => {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
 
+        if (!user.kyc || user.kyc.kycStatus !== "Verified") {
+            return res.status(400).json({ success: false, message: `Sorry, you haven't completed KYC`});
+          }
+
         const asset = user.assets.find(asset => asset.currency === currency);
 
         if (!asset) {

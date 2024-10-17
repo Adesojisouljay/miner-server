@@ -1,5 +1,7 @@
 import KYC from '../models/Kyc.js';
 import User from '../models/Users.js';
+import messages from '../variables/messages.js';
+import { activitiesEmail } from '../utils/nodemailer.js';
 
 export const submitKYC = async (req, res) => {
   try {
@@ -15,7 +17,7 @@ export const submitKYC = async (req, res) => {
         otherName,
         idDocument,
         selfie,
-        kycStatus: 'pending'
+        kycStatus: 'Pending'
       });
     } else {
       kyc.firstName = firstName;
@@ -23,12 +25,18 @@ export const submitKYC = async (req, res) => {
       kyc.otherName = otherName;
       kyc.idDocument = idDocument;
       kyc.selfie = selfie;
-      kyc.kycStatus = 'pending';
+      kyc.kycStatus = 'Pending';
     }
 
     await kyc.save();
 
     await User.findByIdAndUpdate(userId, { kyc });
+
+    const user = await User.findById(userId);
+
+    const emailContent = messages.kycSubmissionEmail(user.username);
+
+    activitiesEmail(user.email, messages.kycSubmissionSubject, emailContent);
 
     res.status(200).json({ success: true, message: 'KYC documents submitted successfully' });
   } catch (error) {
@@ -47,10 +55,16 @@ export const approveKyc = async (req, res) => {
       return res.status(404).json({ success: false, message: 'KYC record not found' });
     }
 
-    kyc.kycStatus = 'verified';
+    kyc.kycStatus = 'Verified';
     await kyc.save();
 
     await User.findByIdAndUpdate(kyc.userId, { kyc: { ...kyc.toObject() } });
+
+    const user = await User.findById(kyc.userId);
+
+    const emailContent = messages.kycApprovalEmail(user.username);
+
+    activitiesEmail(user.email, messages.kycApprovalSubject, emailContent);
 
     res.status(200).json({ success: true, message: 'KYC record verified successfully' });
   } catch (error) {
@@ -68,10 +82,16 @@ export const rejectKyc = async (req, res) => {
       return res.status(404).json({ success: false, message: 'KYC record not found' });
     }
 
-    kyc.kycStatus = 'rejected';
+    kyc.kycStatus = 'Rejected';
     await kyc.save();
 
     await User.findByIdAndUpdate(kyc.userId, { kyc: { ...kyc.toObject() } });
+
+    const user = await User.findById(kyc.userId);
+
+    const emailContent = messages.kycRejectionEmail(user.username);
+
+    activitiesEmail(user.email, messages.kycRejectionSubject, emailContent);
 
     res.status(200).json({ success: true, message: 'KYC record rejected successfully' });
   } catch (error) {

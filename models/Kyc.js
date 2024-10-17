@@ -9,8 +9,8 @@ const kycSchema = new mongoose.Schema({
   selfie: { type: String, required: true },
   kycStatus: { 
     type: String, 
-    enum: ['pending', 'verified', 'rejected'], 
-    default: 'pending' 
+    enum: ['Pending', 'Verified', 'Rejected'], 
+    default: 'Pending' 
   },
   verifiedAt: { type: Date },
   rejectedAt: { type: Date },
