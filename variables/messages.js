@@ -224,6 +224,64 @@ cryptoDepositConfirmedEmail: (username, amount, currency, transactionId) => `
   [ekzatrade@outlook.com]
 `,
 cryptoDepositConfirmedSubject: 'Deposit Confirmed and Credited',
+kycSubmissionEmail: (username) => `
+Dear ${username},
+
+Thank you for submitting your KYC (Know Your Customer) documents to EkzaTrade. We have received your documents and will begin reviewing them shortly.
+
+**What to expect next:**
+- Our verification team will review your submission.
+- We will notify you via email once the review is complete or if any additional information is required.
+
+The review process may take up to 48 hours. If you have any questions or need assistance during this time, feel free to contact our support team.
+
+Thank you for choosing EkzaTrade. Your compliance helps us maintain a secure and trustworthy platform.
+
+Warm regards,
+
+The EkzaTrade Team
+[ekzatrade@outlook.com]
+`,
+kycSubmissionSubject: 'KYC Submission Received - Under Review',
+
+// KYC Approval Email
+kycApprovalEmail: (username) => `
+Dear ${username},
+
+Congratulations! Your KYC (Know Your Customer) verification has been successfully approved. You now have full access to all the features and benefits of EkzaTrade.
+
+**What this means for you:**
+- Increased account limits for trading and withdrawals.
+- Full access to all trading pairs and features on our platform.
+
+Thank you for completing the KYC process and helping us maintain a safe trading environment. If you have any further questions, our support team is always here to assist you.
+
+Warm regards,
+
+The EkzaTrade Team
+[ekzatrade@outlook.com]
+`,
+kycApprovalSubject: 'KYC Verification Approved - Welcome to Full Access',
+kycRejectionEmail: (username) => `
+Dear ${username},
+
+We regret to inform you that your KYC (Know Your Customer) verification has not been approved at this time.
+
+**Reason for rejection:**
+- The submitted documents did not meet our verification requirements.
+
+To resolve this, we encourage you to re-submit your documents. Please ensure that the documents are clear, legible, and meet our guidelines. You can upload your updated documents by logging into your EkzaTrade account.
+
+If you need further assistance or have questions, please contact our support team.
+
+Thank you for your understanding.
+
+Warm regards,
+
+The EkzaTrade Team
+[ekzatrade@outlook.com]
+`,
+kycRejectionSubject: 'KYC Verification Unsuccessful - Action Required',
 };
 
 export default messages;

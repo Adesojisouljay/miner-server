@@ -301,6 +301,11 @@ export const addBankAccount = async (req, res) => {
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
+
+    if (!user.kyc || user.kyc.kycStatus !== "Verified") {
+      return res.status(400).json({ success: false, message: `Sorry, you haven't completed KYC`});
+    }
+    
     const id =`acc-${new Date().getTime()}`
     const newAccount = { id, accountNumber, accountName, bankName };
 
