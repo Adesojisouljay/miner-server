@@ -4,7 +4,6 @@ import CryptoData from "../models/CryptoData.js";
 export const getCrytpoData = async (req, res) => {
   try {
     const cryptoData = await CryptoData.findOne().sort({ lastUpdated: -1 });
-    console.log(cryptoData)
 
     if (cryptoData) {
       res.json({
