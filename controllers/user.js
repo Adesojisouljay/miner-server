@@ -168,6 +168,13 @@ export const login = async (req, res) => {
       kyc: user.kyc || {}
     };
 
+    const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    const cleanedIpAddress = ipAddress.includes('::ffff:') ? ipAddress.split('::ffff:')[1] : ipAddress;
+    const userAgent = req.headers['user-agent']; 
+
+    const emailContent = messages.loginDetectedEmail(user.username, cleanedIpAddress, userAgent);
+    activitiesEmail(user.email, messages.loginDetectedSubject, emailContent);
+
     res.status(200).json({ success: true, token, user: userWithoutPassword });
   } catch (error) {
     console.error('Error logging in user:', error);
@@ -305,7 +312,7 @@ export const addBankAccount = async (req, res) => {
     if (!user.kyc || user.kyc.kycStatus !== "Verified") {
       return res.status(400).json({ success: false, message: `Sorry, you haven't completed KYC`});
     }
-    
+
     const id =`acc-${new Date().getTime()}`
     const newAccount = { id, accountNumber, accountName, bankName };
 

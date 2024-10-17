@@ -17,8 +17,30 @@ const messages = {
 
     The ezabay Team
     [support@ezabay.com]
-  `,
-  welcomeSubject: 'Welcome to Ekzatrade - Your Crypto Trading Hub',
+    `,
+    welcomeSubject: 'Welcome to Ekzatrade - Your Crypto Trading Hub',
+    loginDetectedEmail: (username, ipAddress, userAgent) => `
+      Dear ${username},
+
+      We detected a login to your EkzaTrade account from a new device or location. If this was you, no further action is required.
+
+      **Login Details:**
+      - **Date & Time:** ${new Date().toLocaleString()}
+      - **Device:** ${userAgent}
+      - **Location:** ${ipAddress}
+
+      If you did not attempt to log in, please secure your account immediately by changing your password. You can do this by logging into your account or reaching out to our support team.
+
+      Your account security is our top priority, and we want to ensure your information is safe.
+
+      Thank you for your attention to this matter.
+
+      Warm regards,
+
+      The EkzaTrade Team
+      [ekzatrade@outlook.com]
+    `,
+    loginDetectedSubject: 'New Login Detected on Your EkzaTrade Account',
     sendWithdrawalToken: (username, withdrawalToken) => `
       Dear ${username},
     
@@ -165,123 +187,121 @@ const messages = {
     `,
     depositPendingSubject: 'Deposit Pending Confirmation',
     failedLoginAttemptsEmail: (username) => `
-    Dear ${username},
+      Dear ${username},
 
-    We noticed multiple failed login attempts on your EkzaTrade account. For your security, your account has been temporarily suspended for 1 hour.
+      We noticed multiple failed login attempts on your EkzaTrade account. For your security, your account has been temporarily suspended for 1 hour.
 
-    **What to do next?**
-    Please try logging in again after the suspension period has ended. If you believe this action was taken in error or have any concerns, please contact our support team immediately at [ekzatrade@outlook.com].
+      **What to do next?**
+      Please try logging in again after the suspension period has ended. If you believe this action was taken in error or have any concerns, please contact our support team immediately at [ekzatrade@outlook.com].
 
-    Your account security is very important to us, and we're here to assist you with any issues you might have.
+      Your account security is very important to us, and we're here to assist you with any issues you might have.
 
-    Thank you for your understanding.
+      Thank you for your understanding.
 
-    Warm regards,
+      Warm regards,
 
-    The EkzaTrade Team
-    [ekzatrade@outlook.com]
-  `,
-  failedLoginAttemptsSubject: 'Account Temporarily Suspended Due to Failed Login Attempts',
-  cryptoDepositProcessingEmail: (username, amount, currency, transactionId) => `
-  Dear ${username},
-  
-  We want to inform you that your deposit of **${amount} ${currency}** is currently being processed.
+      The EkzaTrade Team
+      [ekzatrade@outlook.com]
+    `,
+    failedLoginAttemptsSubject: 'Account Temporarily Suspended Due to Failed Login Attempts',
+    cryptoDepositProcessingEmail: (username, amount, currency, transactionId) => `
+      Dear ${username},
+      
+      We want to inform you that your deposit of **${amount} ${currency}** is currently being processed.
 
-  **Transaction Details:**
-  - Amount: **${amount} ${currency}**
-  - Status: **Processing**
-  - Transaction ID: [${transactionId}](https://blockstream.info/testnet/tx/${transactionId})
+      **Transaction Details:**
+      - Amount: **${amount} ${currency}**
+      - Status: **Processing**
+      - Transaction ID: [${transactionId}](https://blockstream.info/testnet/tx/${transactionId})
 
-  Please allow some time for the transaction to be completed. We will notify you as soon as your deposit is confirmed.
+      Please allow some time for the transaction to be completed. We will notify you as soon as your deposit is confirmed.
 
-  Thank you for your patience and for choosing EkzaTrade.
+      Thank you for your patience and for choosing EkzaTrade.
 
-  Warm regards,
+      Warm regards,
 
-  The EkzaTrade Team
-  [ekzatrade@outlook.com]
-`,
-cryptoDepositProcessingSubject: 'Your Deposit is Being Processed',
-cryptoDepositConfirmedEmail: (username, amount, currency, transactionId) => `
-  Dear ${username},
-  
-  We are pleased to confirm that your deposit of **${amount} ${currency}** has been successfully completed and credited to your EkzaTrade account.
+      The EkzaTrade Team
+      [ekzatrade@outlook.com]
+    `,
+    cryptoDepositProcessingSubject: 'Your Deposit is Being Processed',
+    cryptoDepositConfirmedEmail: (username, amount, currency, transactionId) => `
+      Dear ${username},
+      
+      We are pleased to confirm that your deposit of **${amount} ${currency}** has been successfully completed and credited to your EkzaTrade account.
 
-  **Transaction Details:**
-  - Amount: **${amount} ${currency}**
-  - Status: **Confirmed**
-  - Transaction ID: [${transactionId}](https://blockstream.info/testnet/tx/${transactionId})
+      **Transaction Details:**
+      - Amount: **${amount} ${currency}**
+      - Status: **Confirmed**
+      - Transaction ID: [${transactionId}](https://blockstream.info/testnet/tx/${transactionId})
 
-  You can now use these funds for trading on our platform.
+      You can now use these funds for trading on our platform.
 
-  If you have any questions or concerns, please feel free to reach out to our support team.
+      If you have any questions or concerns, please feel free to reach out to our support team.
 
-  Thank you for choosing EkzaTrade.
+      Thank you for choosing EkzaTrade.
 
-  Warm regards,
+      Warm regards,
 
-  The EkzaTrade Team
-  [ekzatrade@outlook.com]
-`,
-cryptoDepositConfirmedSubject: 'Deposit Confirmed and Credited',
-kycSubmissionEmail: (username) => `
-Dear ${username},
+      The EkzaTrade Team
+      [ekzatrade@outlook.com]
+    `,
+    cryptoDepositConfirmedSubject: 'Deposit Confirmed and Credited',
+    kycSubmissionEmail: (username) => `
+      Dear ${username},
 
-Thank you for submitting your KYC (Know Your Customer) documents to EkzaTrade. We have received your documents and will begin reviewing them shortly.
+      Thank you for submitting your KYC (Know Your Customer) documents to EkzaTrade. We have received your documents and will begin reviewing them shortly.
 
-**What to expect next:**
-- Our verification team will review your submission.
-- We will notify you via email once the review is complete or if any additional information is required.
+      **What to expect next:**
+      - Our verification team will review your submission.
+      - We will notify you via email once the review is complete or if any additional information is required.
 
-The review process may take up to 48 hours. If you have any questions or need assistance during this time, feel free to contact our support team.
+      The review process may take up to 48 hours. If you have any questions or need assistance during this time, feel free to contact our support team.
 
-Thank you for choosing EkzaTrade. Your compliance helps us maintain a secure and trustworthy platform.
+      Thank you for choosing EkzaTrade. Your compliance helps us maintain a secure and trustworthy platform.
 
-Warm regards,
+      Warm regards,
 
-The EkzaTrade Team
-[ekzatrade@outlook.com]
-`,
-kycSubmissionSubject: 'KYC Submission Received - Under Review',
+      The EkzaTrade Team
+      [ekzatrade@outlook.com]
+    `,
+    kycSubmissionSubject: 'KYC Submission Received - Under Review',
+    kycApprovalEmail: (username) => `
+      Dear ${username},
 
-// KYC Approval Email
-kycApprovalEmail: (username) => `
-Dear ${username},
+      Congratulations! Your KYC (Know Your Customer) verification has been successfully approved. You now have full access to all the features and benefits of EkzaTrade.
 
-Congratulations! Your KYC (Know Your Customer) verification has been successfully approved. You now have full access to all the features and benefits of EkzaTrade.
+      **What this means for you:**
+      - Increased account limits for trading and withdrawals.
+      - Full access to all trading pairs and features on our platform.
 
-**What this means for you:**
-- Increased account limits for trading and withdrawals.
-- Full access to all trading pairs and features on our platform.
+      Thank you for completing the KYC process and helping us maintain a safe trading environment. If you have any further questions, our support team is always here to assist you.
 
-Thank you for completing the KYC process and helping us maintain a safe trading environment. If you have any further questions, our support team is always here to assist you.
+      Warm regards,
 
-Warm regards,
+      The EkzaTrade Team
+      [ekzatrade@outlook.com]
+    `,
+    kycApprovalSubject: 'KYC Verification Approved - Welcome to Full Access',
+    kycRejectionEmail: (username) => `
+      Dear ${username},
 
-The EkzaTrade Team
-[ekzatrade@outlook.com]
-`,
-kycApprovalSubject: 'KYC Verification Approved - Welcome to Full Access',
-kycRejectionEmail: (username) => `
-Dear ${username},
+      We regret to inform you that your KYC (Know Your Customer) verification has not been approved at this time.
 
-We regret to inform you that your KYC (Know Your Customer) verification has not been approved at this time.
+      **Reason for rejection:**
+      - The submitted documents did not meet our verification requirements.
 
-**Reason for rejection:**
-- The submitted documents did not meet our verification requirements.
+      To resolve this, we encourage you to re-submit your documents. Please ensure that the documents are clear, legible, and meet our guidelines. You can upload your updated documents by logging into your EkzaTrade account.
 
-To resolve this, we encourage you to re-submit your documents. Please ensure that the documents are clear, legible, and meet our guidelines. You can upload your updated documents by logging into your EkzaTrade account.
+      If you need further assistance or have questions, please contact our support team.
 
-If you need further assistance or have questions, please contact our support team.
+      Thank you for your understanding.
 
-Thank you for your understanding.
+      Warm regards,
 
-Warm regards,
-
-The EkzaTrade Team
-[ekzatrade@outlook.com]
-`,
-kycRejectionSubject: 'KYC Verification Unsuccessful - Action Required',
+      The EkzaTrade Team
+      [ekzatrade@outlook.com]
+    `,
+    kycRejectionSubject: 'KYC Verification Unsuccessful - Action Required',
 };
 
 export default messages;

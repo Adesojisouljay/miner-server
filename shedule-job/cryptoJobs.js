@@ -4,9 +4,9 @@ import { sweepBalancesToHotWallet, updateSweepStatus } from "../crypto/bitcoin/s
 import { processPendingTrxTransactions, watchAllTrxDeposits, watchAllTronDeposits } from "../crypto/tron/watchJobs.js";
 import { sweepTrxBalancesToHotWallet, sweepTronBalances } from "../crypto/tron/sweep.js";
 
-export const watchAllBtcDeposits = cron.schedule('*/5 * * * *', watchAllBitcoinDeposits);
+export const watchAllBtcDeposits = cron.schedule('*/10 * * * *', watchAllBitcoinDeposits);
 
-export const processPendingBtcTransactions = cron.schedule('*/5 * * * *', processPendingTransactions);
+export const processPendingBtcTransactions = cron.schedule('*/12 * * * *', processPendingTransactions);
 
 export const sweepBtcBalancesToHotWallet = cron.schedule('*/30 * * * *', sweepBalancesToHotWallet);
 
