@@ -1,6 +1,7 @@
 import express from 'express';
 import {register, 
-    login, 
+    login,
+    getAllUsers,
     profile, 
     updateProfile, 
     updateRole, 
@@ -20,6 +21,7 @@ const router = express.Router();
 
 router.post('/register', register);
 router.post('/login',logIpAddress, loginRateLimiter, login);
+router.get('/users', getAllUsers);
 router.post('/password-reset-token', authMiddleware, requestPasswordReset);
 router.post('/password-reset', authMiddleware, resetPassword);
 router.post('/add-account', authMiddleware, addBankAccount);

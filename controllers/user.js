@@ -197,6 +197,25 @@ export const login = async (req, res) => {
   }
 };
 
+// Get all users
+export const getAllUsers = async (req, res) => {
+  try {
+    // Fetch all users from the database
+    const users = await User.find().select('-password').lean();
+
+    // Check if users are found
+    if (!users) {
+      return res.status(404).json({ success: false, message: 'No users found' });
+    }
+
+    // Send users list as response
+    res.status(200).json({ success: true, users });
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ success: false, error: 'Internal Server Error' });
+  }
+};
+
 // Fetch user profile
 export const profile = async (req, res) => {
   try {
@@ -219,7 +238,8 @@ export const getReceiverProfile = async (req, res) => {
     const receiver = await User.findOne({
       $or: [
         { email: identifier }, 
-        { username: identifier }
+        { username: identifier },
+        { _id: identifier }
       ]
     });
 
@@ -233,6 +253,7 @@ export const getReceiverProfile = async (req, res) => {
       username: receiver.username,
       firstName: receiver.firstName,
       lastName: receiver.lastName,
+      otherName: receiver.otherName,
       email: receiver.email
     }
 
