@@ -94,7 +94,11 @@ export const register = async (req, res) => {
 
     await newUser.save();
 
-    const { usdData, ngnData } = await fetchCryptoData();
+    // const { usdData, ngnData } = await fetchCryptoData();
+    const response = await CryptoData.findOne()
+
+     const usdData = response?.usdData;
+      const ngnData = response?.ngnData;
     console.log({ usdData, ngnData });
 
     newUser.assets.forEach(asset => {
