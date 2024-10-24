@@ -22,8 +22,8 @@ const router = express.Router();
 router.post('/register', register);
 router.post('/login',logIpAddress, loginRateLimiter, login);
 router.get('/users', getAllUsers);
-router.post('/password-reset-token', authMiddleware, requestPasswordReset);
-router.post('/password-reset', authMiddleware, resetPassword);
+router.post('/password-reset-token', requestPasswordReset);
+router.post('/password-reset', resetPassword);
 router.post('/add-account', authMiddleware, addBankAccount);
 router.delete('/delete-account', authMiddleware, deleteBankAccount);
 router.get('/profile', authMiddleware, profile); ////might not need auth for this
