@@ -69,6 +69,27 @@ sendWithdrawalToken: (username, withdrawalToken) => `
   </div>
 `,
 withdrawalSubject: 'Withdrawal Token from EkzaTrade',
+sendPasswordResetToken: (username, resetToken) => `
+  <div style="font-family: Arial, sans-serif; line-height: 1.5;">
+      <p>Dear ${username},</p>
+
+      <p>We received a request to reset the password associated with your EkzaTrade account. To help you securely reset your password, we’ve generated a unique reset token just for you.</p>
+
+      <p><strong>🔐 Your Password Reset Token:</strong> <strong>${resetToken}</strong></p>
+
+      <p>Please enter this token within the next 15 minutes to proceed with resetting your password. This token is for one-time use only and will expire shortly for your security.</p>
+
+      <p><strong>Why this extra step?</strong><br>At EkzaTrade, safeguarding your account is our top priority. The password reset token ensures that only authorized users can make changes to your account.</p>
+
+      <p>If you did not request a password reset or have any security concerns, please contact our support team immediately. We’re available 24/7 to assist you.</p>
+
+      <p>Thank you for being a valued EkzaTrade user. We’re committed to ensuring your account remains safe and secure.</p>
+
+      <p>Warm regards,<br>The EkzaTrade Team<br><a href="mailto:ekzatrade@outlook.com">ekzatrade@outlook.com</a></p>
+  </div>
+`,
+passwordResetSubject: 'Password Reset Token from EkzaTrade',
+
 
 withdrawalCompletedEmail: (username, amount, currency) => `
   <div style="font-family: Arial, sans-serif; line-height: 1.5;">

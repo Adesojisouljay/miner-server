@@ -412,17 +412,10 @@ export const requestPasswordReset = async (req, res) => {
     user.tokenExpires = resetTokenExpiry;
 
     await user.save();
- 
-    const mailOptions = {
-      to: user.email,
-      from: process.env.SUPPORT_EMAIL,
-      subject: 'Password Reset',
-      text: `Your password reset code is ${resetToken}. This code is valid for i5 minutes.\n\n
-            You can reset your password by entering this code on the following page:\n\n${resetLink}\n\n
-            If you did not request a password reset, please ignore this email.`,
-    };
 
-    await transporter.sendMail(mailOptions);
+    const emailContent = messages.sendPasswordResetToken(user.username, resetToken);
+
+    activitiesEmail(user.email, messages.passwordResetSubject, emailContent);
 
     res.status(200).json({ success: true, message: 'Password reset code has been sent to your email' });
   } catch (error) {
@@ -434,6 +427,7 @@ export const requestPasswordReset = async (req, res) => {
 export const resetPassword = async (req, res) => {
   try {
     const { token, newPassword } = req.body;
+    console.log("object", token, newPassword)
 
     const user = await User.findOne({
       token: token,
